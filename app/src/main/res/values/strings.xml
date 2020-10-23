@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">AudioMoth-USB-HID-Android</string>
+    <string name="CONFIG">Configurar</string>
+    <string name="DEVICE">Elegir dispositivo</string>
     <string name="BINARY">binary</string>
     <string name="INTEGER">integer</string>
     <string name="HEXADECIMAL">hexadecimal</string>

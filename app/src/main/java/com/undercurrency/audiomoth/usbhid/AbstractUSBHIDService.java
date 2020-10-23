@@ -188,32 +188,18 @@ public class AbstractUSBHIDService extends Service {
         onShowDevicesList(devicesName);
     }
 
-    private void sendData(String data, boolean sendAsString) {
-        if (device != null && mUsbManager.hasPermission(device) && !data.isEmpty()) {
+    private void sendData(byte[] data, boolean sendAsString) {
+        if (device != null && mUsbManager.hasPermission(device) && data.length>0) {
             // mLog(connection +"\n"+ device +"\n"+ request +"\n"+
             // packetSize);
             for (UsbInterface intf: interfacesList) {
                 for (int i = 0; i < intf.getEndpointCount(); i++) {
                     UsbEndpoint endPointWrite = intf.getEndpoint(i);
                     if (UsbConstants.USB_DIR_OUT == endPointWrite.getDirection()) {
-                        byte[] out = data.getBytes();// UTF-16LE
-                        // Charset.forName("UTF-16")
-                        onUSBDataSending(data);
-                        if (sendAsString) {
-                            try {
-                                String str[] = data.split("[\\s]");
-                                out = new byte[str.length];
-                                for (int s = 0; s < str.length; s++) {
-                                    out[s] = USBUtils.toByte(Integer.decode(str[s]));
-                                }
-                            } catch (Exception e) {
-                                onSendingError(e);
-                            }
-                        }
-                        int status = connection.bulkTransfer(endPointWrite, out, out.length, 250);
-                        onUSBDataSended(status, out);
-                        status = connection.controlTransfer(0x21, REQUEST_SET_REPORT, REPORT_TYPE_OUTPUT, 0x02, out, out.length, 250);
-                        onUSBDataSended(status, out);
+                        int status = connection.bulkTransfer(endPointWrite, data, data.length, 250);
+                        onUSBDataSended(status, data);
+                        status = connection.controlTransfer(0x21, REQUEST_SET_REPORT, REPORT_TYPE_OUTPUT, 0x02, data, data.length, 250);
+                        onUSBDataSended(status, data);
                     }
                 }
             }

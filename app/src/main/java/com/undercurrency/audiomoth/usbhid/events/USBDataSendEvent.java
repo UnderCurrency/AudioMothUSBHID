@@ -18,13 +18,13 @@
 package com.undercurrency.audiomoth.usbhid.events;
 
 public class USBDataSendEvent {
-    private final String data;
+    private final byte[] data;
 
-    public USBDataSendEvent(String data) {
+    public USBDataSendEvent(byte[] data) {
         this.data = data;
     }
 
-    public String getData() {
+    public byte[] getData() {
         return data;
     }
 }
