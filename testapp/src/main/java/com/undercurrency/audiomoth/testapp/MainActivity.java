@@ -1,13 +1,13 @@
 package com.undercurrency.audiomoth.testapp;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.undercurrency.audiomoth.usbhid.USBHidTool;
 import com.undercurrency.audiomoth.usbhid.events.PrepareDevicesListEvent;
@@ -22,13 +22,14 @@ import de.greenrobot.event.EventBusException;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener  {
 
+    private static final String TAG = "TestAudoMoth";
     private Button btnDispositivo;
     private Button btnConfigurar;
     protected EventBus eventBus;
     private Intent usbhidService;
     private RecordingSettings rs;
     private DeviceInfo deviceInfo;
-    private boolean deviceSelected=false;
+    private final boolean deviceSelected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,12 +71,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 eventBus.post(new USBDataSendEvent(rs.serializeToBytes()));
             }
         } else if (v == btnDispositivo) {
+            Log.v(TAG, "onClick btnDispositivo");
             eventBus.post(new PrepareDevicesListEvent());
         }
     }
 
     private void startService(){
         usbhidService = new Intent(this, USBHidTool.class);
+        startService(usbhidService);
     }
 
 
@@ -83,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         showListOfDevices(event.getCharSequenceArray());
     }
 
-    void showListOfDevices(CharSequence devicesName[]) {
+    void showListOfDevices(CharSequence[] devicesName) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         if (devicesName.length == 0) {
@@ -92,12 +95,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             builder.setTitle(getString(R.string.MESSAGE_SELECT_YOUR_USB_HID_DEVICE));
         }
 
-        builder.setItems(devicesName, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                eventBus.post(new SelectDeviceEvent(which));
-            }
-        });
+        builder.setItems(devicesName, (dialog, which) -> eventBus.post(new SelectDeviceEvent(which)));
         builder.setCancelable(true);
         builder.show();
     }

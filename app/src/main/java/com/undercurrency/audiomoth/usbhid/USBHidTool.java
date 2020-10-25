@@ -205,7 +205,7 @@ public class USBHidTool  extends AbstractUSBHIDService {
             StringBuilder stringBuilder = new StringBuilder();
             int i;
             for ( i = 0; i < buffer.length/* && buffer[i] != 0*/; i++) {
-                stringBuilder.append(delimiter).append("0b").append(Integer.toBinaryString(Integer.valueOf(buffer[i])));
+                stringBuilder.append(delimiter).append("0b").append(Integer.toBinaryString((int) buffer[i]));
             }
 
             eventBus.post(new USBDataReceiveEvent(stringBuilder.toString(), i));
@@ -228,7 +228,7 @@ public class USBHidTool  extends AbstractUSBHIDService {
                             .setAction(getString(R.string.USB_HID_TERMINAL_CLOSE_ACTION)),
                     0);
             mNotificationBuilder
-                   // .setSmallIcon(R.drawable.ic_launcher)
+                    .setSmallIcon(android.R.drawable.stat_notify_sdcard_usb)
                     .setCategory(NotificationCompat.CATEGORY_SERVICE)
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                     .setContentTitle(getText(R.string.app_name))
