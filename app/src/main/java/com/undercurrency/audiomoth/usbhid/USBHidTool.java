@@ -193,7 +193,6 @@ public class USBHidTool  extends AbstractUSBHIDService {
                 }
             }
         }
-
         @Override
         public void onSendingError(Exception e) {
             mLog("Please check your bytes, sent as text");
@@ -202,13 +201,8 @@ public class USBHidTool  extends AbstractUSBHIDService {
         @Override
         public void onUSBDataReceive(byte[] buffer) {
 
-            StringBuilder stringBuilder = new StringBuilder();
-            int i;
-            for ( i = 0; i < buffer.length/* && buffer[i] != 0*/; i++) {
-                stringBuilder.append(delimiter).append("0b").append(Integer.toBinaryString((int) buffer[i]));
-            }
 
-            eventBus.post(new USBDataReceiveEvent(stringBuilder.toString(), i));
+            eventBus.post(new USBDataReceiveEvent(buffer, buffer.length));
         }
 
         private void mLog(String log) {

@@ -17,19 +17,36 @@
 
 package com.undercurrency.audiomoth.usbhid.model;
 
+import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.Date;
+
 /**
  * DeviceInfo a pojo to hold the basic device identification for an AM device
  */
 public class DeviceInfo {
     private static final String SEMANTIC_VERSION="1.4.4";
-    private int deviceId;
+    private String deviceId;
     private String firmwareVersion;
-    private float  battery;
+    private String  battery;
+    private Date date;
 
-    public DeviceInfo(int deviceId, String firmwareVersion, float battery) {
+
+
+    public DeviceInfo(byte[] fromArray){
+        date = convertBytesToDate(fromArray,1);
+        deviceId = convertBytesToString(fromArray,1+4);
+        battery = convertBytesToBatteryState(fromArray, 1+4+8);
+        firmwareVersion= convertBytesToFirmwareVersion(fromArray,1 + 4 + 8 + 1);
+    }
+
+
+
+    public DeviceInfo(String deviceId, String firmwareVersion, String battery, Date date) {
         this.deviceId = deviceId;
         this.firmwareVersion = firmwareVersion;
         this.battery = battery;
+        this.date = date;
     }
 
     /**
@@ -55,11 +72,11 @@ public class DeviceInfo {
         return false;
     }
 
-    public int getDeviceId() {
+    public String getDeviceId() {
         return deviceId;
     }
 
-    public void setDeviceId(int deviceId) {
+    public void setDeviceId(String deviceId) {
         this.deviceId = deviceId;
     }
 
@@ -71,31 +88,57 @@ public class DeviceInfo {
         this.firmwareVersion = firmwareVersion;
     }
 
-    public float getBattery() {
+    public String getBattery() {
         return battery;
     }
 
-    public void setBattery(float battery) {
+    public void setBattery(String battery) {
         this.battery = battery;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        DeviceInfo that = (DeviceInfo) o;
-
-        if (deviceId != that.deviceId) return false;
-        if (Float.compare(that.battery, battery) != 0) return false;
-        return firmwareVersion.equals(that.firmwareVersion);
+    public Date getDate() {
+        return date;
     }
 
-    @Override
-    public int hashCode() {
-        int result = deviceId;
-        result = 31 * result + firmwareVersion.hashCode();
-        result = 31 * result + (battery != +0.0f ? Float.floatToIntBits(battery) : 0);
-        return result;
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+
+
+    private Date convertBytesToDate(byte[]  buffer, int offset){
+        long unixTimestamp = (buffer[offset] & 0xFF) + ((buffer[offset + 1] & 0xFF) << 8) + ((buffer[offset + 2] & 0xFF) << 16) + ((buffer[offset + 3] & 0xFF) << 24);
+        return new Date(unixTimestamp * 1000);
+    }
+
+    private String convertBytesToString(byte[] buffer, int offset){
+        final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+        char[] hexChars = new char[buffer.length * 2];
+        byte[] array = Arrays.copyOfRange(buffer,offset,offset+8);
+        byte[] reverse = new byte[array.length];
+        for(int i=array.length-1;i>=0;i--){
+            reverse[array.length - i - 1]= array[i];
+        }
+        for (int j = 0; j < reverse.length; j++) {
+            int v = reverse[j] & 0xFF;
+            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
+    private String convertBytesToBatteryState(byte[] buffer, int offset){
+        DecimalFormat df = new DecimalFormat("#.#");
+        byte batterySate = buffer[offset];
+        switch (batterySate) {
+            case 0: return "< 3.6V";
+            case 15 : return "<4.9V";
+            default: {
+                return df.format(3.5+batterySate/10)+"V";
+            }
+        }
+    }
+    private String convertBytesToFirmwareVersion(byte[] fromArray, int i) {
+      return  Integer.toString(fromArray[i + 1])+"."+Integer.toString(fromArray[i + 2])+"."+Integer.toString(fromArray[i + 3]);
     }
 }

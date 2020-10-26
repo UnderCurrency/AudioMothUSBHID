@@ -18,15 +18,15 @@
 package com.undercurrency.audiomoth.usbhid.events;
 
 public class USBDataReceiveEvent {
-    private final String data;
+    private final byte[] data;
     private final int bytesCount;
 
-    public USBDataReceiveEvent(String data, int bytesCount) {
+    public USBDataReceiveEvent(byte[] data, int bytesCount) {
         this.data = data;
         this.bytesCount = bytesCount;
     }
 
-    public String getData() {
+    public byte[] getData() {
         return data;
     }
 
