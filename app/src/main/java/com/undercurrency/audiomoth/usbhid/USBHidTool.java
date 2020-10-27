@@ -25,6 +25,7 @@ import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
@@ -64,6 +65,7 @@ public class USBHidTool  extends AbstractUSBHIDService {
         @Override
         public void onDeviceConnected(UsbDevice device) {
             mLog("device VID:0x" + Integer.toHexString(device.getVendorId()) + " PID:0x" + Integer.toHexString(device.getProductId()) + " " + device.getDeviceName() + " connected");
+            eventBus.post(new DeviceAttachedEvent());
         }
 
         @Override
@@ -200,8 +202,6 @@ public class USBHidTool  extends AbstractUSBHIDService {
 
         @Override
         public void onUSBDataReceive(byte[] buffer) {
-
-
             eventBus.post(new USBDataReceiveEvent(buffer, buffer.length));
         }
 

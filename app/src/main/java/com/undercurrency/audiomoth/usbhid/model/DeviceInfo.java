@@ -104,8 +104,6 @@ public class DeviceInfo {
         this.date = date;
     }
 
-
-
     private Date convertBytesToDate(byte[]  buffer, int offset){
         long unixTimestamp = (buffer[offset] & 0xFF) + ((buffer[offset + 1] & 0xFF) << 8) + ((buffer[offset + 2] & 0xFF) << 16) + ((buffer[offset + 3] & 0xFF) << 24);
         return new Date(unixTimestamp * 1000);
@@ -138,6 +136,7 @@ public class DeviceInfo {
             }
         }
     }
+
     private String convertBytesToFirmwareVersion(byte[] fromArray, int i) {
       return  Integer.toString(fromArray[i + 1])+"."+Integer.toString(fromArray[i + 2])+"."+Integer.toString(fromArray[i + 3]);
     }

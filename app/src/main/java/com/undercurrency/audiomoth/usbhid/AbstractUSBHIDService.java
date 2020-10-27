@@ -37,6 +37,8 @@ import com.undercurrency.audiomoth.usbhid.events.PrepareDevicesListEvent;
 import com.undercurrency.audiomoth.usbhid.events.SelectDeviceEvent;
 import com.undercurrency.audiomoth.usbhid.events.USBDataSendEvent;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -169,6 +171,8 @@ public class AbstractUSBHIDService extends Service {
     }
 
     public void onEventMainThread(USBDataSendEvent event){
+        Log.v(TAG,"UsbDataSendEvent");
+        Log.d(TAG,"USBDataSendEvent");
         sendData(event.getData(), sendedDataType);
     }
 
@@ -189,6 +193,7 @@ public class AbstractUSBHIDService extends Service {
     }
 
     private void sendData(byte[] data, boolean sendAsString) {
+        Log.v(TAG,"sendData");
         if (device != null && mUsbManager.hasPermission(device) && data.length>0) {
             // mLog(connection +"\n"+ device +"\n"+ request +"\n"+
             // packetSize);
@@ -243,8 +248,10 @@ public class AbstractUSBHIDService extends Service {
                 interfacesList = new LinkedList();
                 for(int i = 0; i < device.getInterfaceCount(); i++) {
                     UsbInterface intf = device.getInterface(i);
-                    connection.claimInterface(intf, true);
-                    interfacesList.add(intf);
+                    if(intf.getInterfaceClass()==3) {
+                        connection.claimInterface(intf, true);
+                        interfacesList.add(intf);
+                    }
                 }
                 usbThreadDataReceiver = new USBThreadDataReceiver();
                 usbThreadDataReceiver.start();

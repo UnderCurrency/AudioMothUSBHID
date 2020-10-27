@@ -1,6 +1,7 @@
 package com.undercurrency.audiomoth.testapp;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Intent usbhidService;
     private RecordingSettings rs;
     private DeviceInfo deviceInfo;
-    private final boolean deviceSelected = false;
+    private boolean deviceSelected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,13 +79,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         if (v ==  btnConfigurar) {
-           // if(deviceSelected) {
-               String ultrasonic =  getJsonFromAssets(this,"Ultrasonico.json");
+           if(deviceSelected) {
+                String ultrasonic =  getJsonFromAssets(this,"Ultrasonico.json");
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 rs =  gson.fromJson(ultrasonic, RecordingSettings.class);
                 rs.setDeviceInfo(deviceInfo);
                 eventBus.post(new USBDataSendEvent(rs.serializeToBytes()));
-            //}
+            }
         } else if (v == btnDispositivo) {
             Log.v(TAG, "onClick btnDispositivo");
             eventBus.post(new PrepareDevicesListEvent());
@@ -96,10 +97,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startService(usbhidService);
     }
 
-    public void on(DeviceAttachedEvent event){
-        Toast.makeText(this,getString(R.string.DEVICE_ATTACHED),Toast.LENGTH_LONG);
-        byte[] packet ={0x0, 0x5};
+    public void onEvent(DeviceAttachedEvent event){
+        Toast.makeText(getApplicationContext(),getString(R.string.DEVICE_ATTACHED),Toast.LENGTH_LONG);
+        byte[] packet ={0x05};
         eventBus.post(new USBDataSendEvent(packet));
+        deviceSelected=true;
         btnConfigurar.setEnabled(true);
     }
 
@@ -108,8 +110,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void onEvent(USBDataReceiveEvent event) {
-       if( event.getBytesCount() < 58 ) {
+        Toast.makeText(getApplicationContext(), "USBDataReceiveEvent "+event.getBytesCount(),Toast.LENGTH_LONG);
+       if( event.getBytesCount() == 64 ) {
            deviceInfo = new DeviceInfo(event.getData());
+           Log.v(TAG,"deviceInfo "+deviceInfo.getBattery()+", serial "+deviceInfo.getDeviceId()+", firmware "+ deviceInfo.getFirmwareVersion());
        }
     }
 
@@ -118,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         showListOfDevices(event.getCharSequenceArray());
     }
 
-    void showListOfDevices(CharSequence[] devicesName) {
+    void showListOfDevices(CharSequence devicesName[]) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         if (devicesName.length == 0) {
@@ -127,7 +131,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             builder.setTitle(getString(R.string.MESSAGE_SELECT_YOUR_USB_HID_DEVICE));
         }
 
-        builder.setItems(devicesName, (dialog, which) -> eventBus.post(new SelectDeviceEvent(which)));
+        builder.setItems(devicesName, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                eventBus.post(new SelectDeviceEvent(which));
+            }
+        });
         builder.setCancelable(true);
         builder.show();
     }
