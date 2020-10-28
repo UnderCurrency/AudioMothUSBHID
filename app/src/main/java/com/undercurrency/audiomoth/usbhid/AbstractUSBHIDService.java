@@ -192,7 +192,7 @@ public class AbstractUSBHIDService extends Service {
         onShowDevicesList(devicesName);
     }
 
-    private void sendData(byte[] data, boolean sendAsString) {
+    protected void sendData(byte[] data, boolean sendAsString) {
         Log.v(TAG,"sendData");
         if (device != null && mUsbManager.hasPermission(device) && data.length>0) {
             // mLog(connection +"\n"+ device +"\n"+ request +"\n"+

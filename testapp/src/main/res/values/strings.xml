@@ -2,5 +2,6 @@
     <string name="app_name">AudioMoth Test Demo</string>
     <string name="detectDevice">Detectar</string>
     <string name="sendConfiguration">Configurar</string>
+    <string name="CONFIG_HORA">Fijar Fecha</string>
     <string name="DEVICE_ATTACHED">Dispositivo conectado</string>
 </resources>

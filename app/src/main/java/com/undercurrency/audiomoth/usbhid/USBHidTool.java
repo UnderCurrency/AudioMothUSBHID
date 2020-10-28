@@ -29,11 +29,17 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
+import com.undercurrency.audiomoth.usbhid.events.AudioMothConfigEvent;
+import com.undercurrency.audiomoth.usbhid.events.AudioMothPacketEvent;
+import com.undercurrency.audiomoth.usbhid.events.AudioMothSetDateEvent;
 import com.undercurrency.audiomoth.usbhid.events.DeviceAttachedEvent;
 import com.undercurrency.audiomoth.usbhid.events.DeviceDetachedEvent;
 import com.undercurrency.audiomoth.usbhid.events.LogMessageEvent;
 import com.undercurrency.audiomoth.usbhid.events.ShowDevicesListEvent;
 import com.undercurrency.audiomoth.usbhid.events.USBDataReceiveEvent;
+import com.undercurrency.audiomoth.usbhid.events.USBDataSendEvent;
+import com.undercurrency.audiomoth.usbhid.model.AudioMothOperations;
+import com.undercurrency.audiomoth.usbhid.model.DateSettings;
 import com.undercurrency.audiomoth.usbhid.model.DeviceInfo;
 import com.undercurrency.audiomoth.usbhid.model.RecordingSettings;
 
@@ -60,6 +66,28 @@ public class USBHidTool  extends AbstractUSBHIDService {
         @Override
         public void onDestroy() {
             super.onDestroy();
+        }
+
+        public void onAudioMothConfig(AudioMothConfigEvent event){
+          byte[] data = event.getRecordingSettings().serializeToBytes();
+          byte[] payload = new byte[data.length+1];
+          payload[0]= AudioMothOperations.USB_MSG_TYPE_GET_APP_PACKET.getOpcode();
+          System.arraycopy(data,0,payload,1,data.length);
+          sendData(payload, false);
+        }
+
+        public void onAudioMothSetDate(AudioMothSetDateEvent event){
+          DateSettings ds = new DateSettings(event.getDate());
+          byte[] data = ds.serializeToBytes();
+            byte[] payload = new byte[data.length+1];
+            payload[0]= AudioMothOperations.USB_MSG_TYPE_SET_TIME.getOpcode();
+            System.arraycopy(data,0,payload,1,data.length);
+            sendData(payload, false);
+        }
+
+        public void onAudioMothPacket(AudioMothPacketEvent event){
+            byte[] payload ={AudioMothOperations.USB_MSG_TYPE_GET_APP_PACKET.getOpcode()};
+            sendData(payload,false);
         }
 
         @Override

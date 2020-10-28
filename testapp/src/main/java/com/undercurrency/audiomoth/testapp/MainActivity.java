@@ -15,6 +15,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.undercurrency.audiomoth.usbhid.USBHidTool;
+import com.undercurrency.audiomoth.usbhid.events.AudioMothConfigEvent;
+import com.undercurrency.audiomoth.usbhid.events.AudioMothSetDateEvent;
 import com.undercurrency.audiomoth.usbhid.events.DeviceAttachedEvent;
 import com.undercurrency.audiomoth.usbhid.events.DeviceDetachedEvent;
 import com.undercurrency.audiomoth.usbhid.events.PrepareDevicesListEvent;
@@ -29,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.EventBusException;
@@ -38,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String TAG = "TestAudoMoth";
     private Button btnDispositivo;
     private Button btnConfigurar;
+    private Button btnFecha;
     protected EventBus eventBus;
     private Intent usbhidService;
     private RecordingSettings rs;
@@ -61,6 +65,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnDispositivo.setOnClickListener(this);
         btnConfigurar = (Button) findViewById(R.id.btnConfigurar);
         btnConfigurar.setOnClickListener(this);
+        btnFecha = (Button) findViewById(R.id.btnFecha);
+        btnFecha.setOnClickListener(this);
     }
 
     @Override
@@ -85,13 +91,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 rs =  gson.fromJson(ultrasonic, RecordingSettings.class);
                 rs.setDeviceInfo(deviceInfo);
-                byte[] packet = rs.serializeToBytes();
-
-                eventBus.post(new USBDataSendEvent(packet));
+                //byte[] packet = rs.serializeToBytes();
+                eventBus.post(new AudioMothConfigEvent(rs));
+               //eventBus.post(new USBDataSendEvent(packet));
             }
         } else if (v == btnDispositivo) {
             Log.v(TAG, "onClick btnDispositivo");
             eventBus.post(new PrepareDevicesListEvent());
+        } else if (v == btnFecha){
+            eventBus.post(new AudioMothSetDateEvent(new Date()));
         }
     }
 
