@@ -28,6 +28,7 @@ import com.undercurrency.audiomoth.usbhid.model.RecordingSettings;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.EventBusException;
@@ -84,7 +85,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 rs =  gson.fromJson(ultrasonic, RecordingSettings.class);
                 rs.setDeviceInfo(deviceInfo);
-                eventBus.post(new USBDataSendEvent(rs.serializeToBytes()));
+                byte[] packet = rs.serializeToBytes();
+
+                eventBus.post(new USBDataSendEvent(packet));
             }
         } else if (v == btnDispositivo) {
             Log.v(TAG, "onClick btnDispositivo");
@@ -111,9 +114,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void onEvent(USBDataReceiveEvent event) {
         Toast.makeText(getApplicationContext(), "USBDataReceiveEvent "+event.getBytesCount(),Toast.LENGTH_LONG);
+        Log.v(TAG,"USBDataReceiveEvent "+event.getBytesCount());
        if( event.getBytesCount() == 64 ) {
            deviceInfo = new DeviceInfo(event.getData());
-           Log.v(TAG,"deviceInfo "+deviceInfo.getBattery()+", serial "+deviceInfo.getDeviceId()+", firmware "+ deviceInfo.getFirmwareVersion());
+           SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss zz");
+           Log.v(TAG,"deviceInfo "+deviceInfo.getBattery()+", serial "+deviceInfo.getDeviceId()+", firmware "+ deviceInfo.getFirmwareVersion()+" date "+sdf.format(deviceInfo.getDate()));
        }
     }
 

@@ -17,4 +17,24 @@
 
 package com.undercurrency.audiomoth.usbhid.model;
 
-public enum FilterType {LOW,BAND,HIGH}
+
+import com.google.gson.annotations.SerializedName;
+
+public enum FilterType {
+    @SerializedName("low")
+    LOW("low"),
+    @SerializedName("band")
+    BAND("band"),
+    @SerializedName("high")
+    HIGH("high");
+
+    private final String value;
+
+    public String getValue() {
+        return value;
+    }
+
+    private FilterType(String value) {
+        this.value = value;
+    }
+}

@@ -34,10 +34,10 @@ public class DeviceInfo {
 
 
     public DeviceInfo(byte[] fromArray){
-        date = convertBytesToDate(fromArray,1);
-        deviceId = convertBytesToString(fromArray,1+4);
-        battery = convertBytesToBatteryState(fromArray, 1+4+8);
-        firmwareVersion= convertBytesToFirmwareVersion(fromArray,1 + 4 + 8 + 1);
+        date = readDate(fromArray,1);
+        deviceId = readDeviceId(fromArray,1+4);
+        battery = readBatteryStatus(fromArray, 1+4+8);
+        firmwareVersion= readFirmware(fromArray,1 + 4 + 8 + 1);
     }
 
 
@@ -104,14 +104,14 @@ public class DeviceInfo {
         this.date = date;
     }
 
-    private Date convertBytesToDate(byte[]  buffer, int offset){
+    private Date readDate(byte[]  buffer, int offset){
         long unixTimestamp = (buffer[offset] & 0xFF) + ((buffer[offset + 1] & 0xFF) << 8) + ((buffer[offset + 2] & 0xFF) << 16) + ((buffer[offset + 3] & 0xFF) << 24);
         return new Date(unixTimestamp * 1000);
     }
 
-    private String convertBytesToString(byte[] buffer, int offset){
+    private String readDeviceId(byte[] buffer, int offset){
         final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
-        char[] hexChars = new char[buffer.length * 2];
+        char[] hexChars = new char[8 * 2];
         byte[] array = Arrays.copyOfRange(buffer,offset,offset+8);
         byte[] reverse = new byte[array.length];
         for(int i=array.length-1;i>=0;i--){
@@ -125,7 +125,7 @@ public class DeviceInfo {
         return new String(hexChars);
     }
 
-    private String convertBytesToBatteryState(byte[] buffer, int offset){
+    private String readBatteryStatus(byte[] buffer, int offset){
         DecimalFormat df = new DecimalFormat("#.#");
         byte batterySate = buffer[offset];
         switch (batterySate) {
@@ -137,7 +137,7 @@ public class DeviceInfo {
         }
     }
 
-    private String convertBytesToFirmwareVersion(byte[] fromArray, int i) {
-      return  Integer.toString(fromArray[i + 1])+"."+Integer.toString(fromArray[i + 2])+"."+Integer.toString(fromArray[i + 3]);
+    private String readFirmware(byte[] fromArray, int offset) {
+      return  Integer.toString(fromArray[offset ] & 0xFF)+"."+Integer.toString(fromArray[offset + 1]& 0xFF)+"."+Integer.toString(fromArray[offset + 2]& 0xFF);
     }
 }

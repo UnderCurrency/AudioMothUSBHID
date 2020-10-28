@@ -20,6 +20,7 @@ package com.undercurrency.audiomoth.usbhid.model;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import java.sql.Time;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -40,7 +41,7 @@ public class RecordingSettings {
     private boolean ledEnabled;
     private boolean lowVoltageCutoffEnabled;
     private boolean batteryLevelCheckEnabled;
-    private byte sampleRate;
+    private int sampleRate;
     private byte gain;
     private byte recordDuration;
     private byte sleepDuration;
@@ -55,7 +56,9 @@ public class RecordingSettings {
     private Date firstRecordinDate;
     private Date lastRecordingDate;
 
-    public RecordingSettings(DeviceInfo deviceInfo, TimePeriods[] timePeriods, boolean ledEnabled, boolean lowVoltageCutoffEnabled, boolean batteryLevelCheckEnabled, byte sampleRate, byte gain, byte recordDuration, byte sleepDuration, boolean localTime, boolean dutyEnabled, boolean passFiltersEnabled, FilterType filterType, int lowerFilter, int higherFilter, boolean amplitudeThresholdingEnabled, byte amplitudeTreshold, Date firstRecordinDate, Date lastRecordingDate) {
+    public RecordingSettings(){}
+
+    public RecordingSettings(DeviceInfo deviceInfo, TimePeriods[] timePeriods, boolean ledEnabled, boolean lowVoltageCutoffEnabled, boolean batteryLevelCheckEnabled, int sampleRate, byte gain, byte recordDuration, byte sleepDuration, boolean localTime, boolean dutyEnabled, boolean passFiltersEnabled, FilterType filterType, int lowerFilter, int higherFilter, boolean amplitudeThresholdingEnabled, byte amplitudeTreshold, Date firstRecordinDate, Date lastRecordingDate) {
         this.deviceInfo = deviceInfo;
         this.timePeriods = timePeriods;
         this.ledEnabled = ledEnabled;
@@ -78,7 +81,7 @@ public class RecordingSettings {
     }
 
     /**
-     * Convert the Recording Settings object to the byte array representation for AM
+     * Convert the Recording Settings object to the byte array representation for AM plus 0x06
      * AM uses this byte array to define the operation modes in runtime.
      * In the firmware, when the device receives the config data via USB in a form of byte array, it
      * copies to a C structure called configSettings_t, and returns it back to the USB connection
@@ -95,13 +98,17 @@ public class RecordingSettings {
      */
     public byte[] serializeToBytes() {
         Configurations config;
-        byte[] serialization = new byte[58];
+        byte[] serialization = new byte[59];
         int unixTime = (int) (System.currentTimeMillis() / 1000);
         int index = 0;
+        //this is a command
+        writeLittleEndianBytes(serialization,index,1,0x06);
+        index++;
+
         writeLittleEndianBytes(serialization, index, 4, unixTime);
         index += 4;
-        serialization[index++] = this.gain;
-        config = Configurations.getConfig(sampleRate, deviceInfo.isOlderSemanticVersion());
+        serialization[index++] = getGain();
+        config = Configurations.getConfig((int)getSampleRate()/1000, getDeviceInfo().isOlderSemanticVersion());
         serialization[index++] = config.getClockDivider();
         serialization[index++] = config.getAcquisitionCycles();
         serialization[index++] = config.getOversampleRate();
@@ -192,6 +199,54 @@ public class RecordingSettings {
         return serialization;
     }
 
+    public RecordingSettings deserializeFrom(byte[] array){
+       RecordingSettings rs = new RecordingSettings();
+       int i =0;
+       int fecha = readIntFromLittleEndian(array,i);
+       i+=4;
+       setGain(array[i++]);
+        int clockDivider = array[i++];
+        int acquisitionCycles = array[i++];
+        int oversampleRate = array[i++];
+        int sampleRate = readIntFromLittleEndian(array,i);
+        i+=4;
+        int sampleRateDivider = array[i++];
+        setSleepDuration(readByteFromLittleEndian(array,i));
+        i+=2;
+        setRecordDuration(readByteFromLittleEndian(array,i));
+        i+=2;
+        setLedEnabled(array[i++]==0);
+        int timePeriodsLength = array[i];
+        TimePeriods[] tp = new TimePeriods[timePeriodsLength+1];
+
+        for(int j=0 ; j < timePeriodsLength; j++){
+          int intStartMins = (int) readByteFromLittleEndian(array,i);
+          i+=2;
+          int intEndMins = (int) readByteFromLittleEndian(array,i);
+          i+=2;
+          tp[j]= new TimePeriods(intStartMins,intEndMins);
+        }
+        setTimePeriods(tp);
+        for(int k=0; k<MAX_PERIODS-timePeriodsLength;k++){
+           i+=4;
+        }
+        setLocalTime(array[i++]!=0);
+        setLowVoltageCutoffEnabled(array[i++]!=0);
+        setBatteryLevelCheckEnabled(array[i++]!=0);
+        i++;
+        setDutyEnabled(array[i++]!=0);
+        i+=4;
+        i+=4;
+        setPassFiltersEnabled(array[i]!=0 && array[i]!=0);
+        setLowerFilter(readByteFromLittleEndian(array,i));
+        i+=2;
+        setHigherFilter(readByteFromLittleEndian(array,i));
+        i+=2;
+        setAmplitudeTreshold(readByteFromLittleEndian(array,i));
+        i+=2;
+       return rs;
+    }
+
     private int fixTimeZone(Date aDate) {
         DateTime today = new DateTime();
         int dayDiff = today.getDayOfMonth()-  (new DateTime(DateTimeZone.UTC)).getDayOfMonth();
@@ -214,6 +269,21 @@ public class RecordingSettings {
     private int calculateTimezoneOffsetHours() {
         int tzOffset = TimeZone.getDefault().getOffset(new Date().getTime()) / 1000 / 60 / 60;
         return tzOffset;
+    }
+
+    private byte readByteFromLittleEndian(byte[] buffer, int start){
+        int a, b, c, d;
+        c = (buffer[start+1]  & 0xFF) << 8;
+        d =  buffer[start]  & 0xFF;
+        return  (byte)( c | d);
+    }
+    private int readIntFromLittleEndian(byte[] buffer, int start){
+        int a, b, c, d;
+        a = (buffer[start+3] & 0xFF) << 24;
+        b = (buffer[start+2]  & 0xFF) << 16;
+        c = (buffer[start+1]  & 0xFF) << 8;
+        d =  buffer[start]  & 0xFF;
+     return  a | b | c | d;
     }
 
     private void writeLittleEndianBytes(byte[] buffer, int start, int byteCount, int value) {
@@ -255,11 +325,11 @@ public class RecordingSettings {
         this.batteryLevelCheckEnabled = batteryLevelCheckEnabled;
     }
 
-    public byte getSampleRate() {
+    public int getSampleRate() {
         return sampleRate;
     }
 
-    public void setSampleRate(byte sampleRate) {
+    public void setSampleRate(int sampleRate) {
         this.sampleRate = sampleRate;
     }
 
