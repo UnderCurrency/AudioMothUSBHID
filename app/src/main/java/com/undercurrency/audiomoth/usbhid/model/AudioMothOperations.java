@@ -1,7 +1,7 @@
 package com.undercurrency.audiomoth.usbhid.model;
 
 public enum AudioMothOperations {
-
+    NO_OPERATION(0X00),
     USB_MSG_TYPE_GET_TIME (0x01),
     USB_MSG_TYPE_SET_TIME(0x02),
     USB_MSG_TYPE_GET_UID ( 0x03),

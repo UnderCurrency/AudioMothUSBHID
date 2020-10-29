@@ -20,11 +20,13 @@ package com.undercurrency.audiomoth.usbhid.model;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import java.sql.Time;
+
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+import static com.undercurrency.audiomoth.usbhid.USBUtils.*;
+
 
 /**
  * RecordingSettings a POJO holding all the AM settings
@@ -98,12 +100,10 @@ public class RecordingSettings {
      */
     public byte[] serializeToBytes() {
         Configurations config;
-        byte[] serialization = new byte[59];
+        byte[] serialization = new byte[58];
         int unixTime = (int) (System.currentTimeMillis() / 1000);
         int index = 0;
-        //this is a command
-        writeLittleEndianBytes(serialization,index,1,0x06);
-        index++;
+
 
         writeLittleEndianBytes(serialization, index, 4, unixTime);
         index += 4;
@@ -199,8 +199,12 @@ public class RecordingSettings {
         return serialization;
     }
 
-    public RecordingSettings deserializeFrom(byte[] array){
-       RecordingSettings rs = new RecordingSettings();
+    /**
+     *
+     * @param array
+     */
+    public RecordingSettings(byte[] array){
+
        int i =0;
        int fecha = readIntFromLittleEndian(array,i);
        i+=4;
@@ -244,7 +248,6 @@ public class RecordingSettings {
         i+=2;
         setAmplitudeTreshold(readByteFromLittleEndian(array,i));
         i+=2;
-       return rs;
     }
 
     private int fixTimeZone(Date aDate) {
@@ -271,26 +274,7 @@ public class RecordingSettings {
         return tzOffset;
     }
 
-    private byte readByteFromLittleEndian(byte[] buffer, int start){
-        int a, b, c, d;
-        c = (buffer[start+1]  & 0xFF) << 8;
-        d =  buffer[start]  & 0xFF;
-        return  (byte)( c | d);
-    }
-    private int readIntFromLittleEndian(byte[] buffer, int start){
-        int a, b, c, d;
-        a = (buffer[start+3] & 0xFF) << 24;
-        b = (buffer[start+2]  & 0xFF) << 16;
-        c = (buffer[start+1]  & 0xFF) << 8;
-        d =  buffer[start]  & 0xFF;
-     return  a | b | c | d;
-    }
 
-    private void writeLittleEndianBytes(byte[] buffer, int start, int byteCount, int value) {
-        for (int i = 0; i < byteCount; i++) {
-            buffer[start + i] = (byte) ((value >> (i * 8)) & 255);
-        }
-    }
 
 
     public TimePeriods[] getTimePeriods() {

@@ -6,6 +6,10 @@ public class DateSettings {
 
     private Date date;
 
+    public DateSettings(byte[] buffer){
+
+
+    }
     public DateSettings(Date date){
         this.date = date;
     }

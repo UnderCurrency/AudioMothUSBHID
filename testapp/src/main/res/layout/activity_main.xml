@@ -38,4 +38,37 @@
         android:text="@string/CONFIG_HORA"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnConfigurar" />
+
+    <ScrollView
+        android:layout_width="330dp"
+        android:layout_height="429dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="200dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="138dp"
+        android:backgroundTint="#9C9C27B0"
+        android:fillViewport="true"
+        android:overScrollMode="ifContentScrolls"
+        android:scrollbarStyle="outsideInset"
+        android:verticalScrollbarPosition="left"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnFecha">
+
+        <EditText
+            android:id="@+id/tvJson"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:autofillHints=""
+            android:gravity="fill|top"
+            android:hint="@string/DEVICE_ATTACHED"
+            android:inputType="textMultiLine"
+            android:selectAllOnFocus="true"
+            android:singleLine="false"
+            android:textAlignment="gravity"
+            android:textIsSelectable="true"
+            android:textSize="16sp" />
+    </ScrollView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

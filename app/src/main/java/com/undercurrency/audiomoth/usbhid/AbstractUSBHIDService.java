@@ -67,17 +67,7 @@ public class AbstractUSBHIDService extends Service {
     private IntentFilter filter;
     private PendingIntent mPermissionIntent;
 
-    private boolean sendedDataType;
 
-    static class USBUtils{
-        public static int toInt(byte b) {
-            return (int) b & 0xFF;
-        }
-
-        public static byte toByte(int c) {
-            return (byte) (c <= 0x7f ? c : ((c % 0x80) - 0x80));
-        }
-    }
 
     protected EventBus eventBus = EventBus.getDefault();
 
@@ -102,9 +92,6 @@ public class AbstractUSBHIDService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent.getAction();
-        if (getString(R.string.ACTION_USB_DATA_TYPE).equals(action)) {
-            sendedDataType = intent.getBooleanExtra(getString(R.string.ACTION_USB_DATA_TYPE), false);
-        }
         onCommand(intent, action, flags, startId);
         return START_REDELIVER_INTENT;
     }
@@ -171,9 +158,7 @@ public class AbstractUSBHIDService extends Service {
     }
 
     public void onEventMainThread(USBDataSendEvent event){
-        Log.v(TAG,"UsbDataSendEvent");
-        Log.d(TAG,"USBDataSendEvent");
-        sendData(event.getData(), sendedDataType);
+        sendData(event.getData());
     }
 
     public void onEvent(SelectDeviceEvent event) {
@@ -192,11 +177,9 @@ public class AbstractUSBHIDService extends Service {
         onShowDevicesList(devicesName);
     }
 
-    protected void sendData(byte[] data, boolean sendAsString) {
-        Log.v(TAG,"sendData");
+    protected void sendData(byte[] data) {
+        Log.d(TAG,"sendData");
         if (device != null && mUsbManager.hasPermission(device) && data.length>0) {
-            // mLog(connection +"\n"+ device +"\n"+ request +"\n"+
-            // packetSize);
             for (UsbInterface intf: interfacesList) {
                 for (int i = 0; i < intf.getEndpointCount(); i++) {
                     UsbEndpoint endPointWrite = intf.getEndpoint(i);
