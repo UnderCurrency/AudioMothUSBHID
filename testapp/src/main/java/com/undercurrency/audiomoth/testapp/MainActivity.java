@@ -47,21 +47,19 @@ import com.undercurrency.audiomoth.usbhid.events.PrepareDevicesListEvent;
 import com.undercurrency.audiomoth.usbhid.events.SelectDeviceEvent;
 import com.undercurrency.audiomoth.usbhid.events.ShowDevicesListEvent;
 import com.undercurrency.audiomoth.usbhid.events.USBDataReceiveEvent;
-import com.undercurrency.audiomoth.usbhid.events.USBDataSendEvent;
 import com.undercurrency.audiomoth.usbhid.model.DeviceInfo;
 import com.undercurrency.audiomoth.usbhid.model.RecordingSettings;
-
-import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.EventBusException;
+
+import static com.undercurrency.audiomoth.usbhid.USBUtils.byteToHexString;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -70,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btnDispositivo;
     private Button btnConfigurar;
     private Button btnFecha;
+    private Button btnSerialize;
     private TextView tvJson;
     private Intent usbhidService;
     private RecordingSettings rs;
@@ -106,13 +105,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initUI() {
-        btnDispositivo = (Button) findViewById(R.id.btnDispositivo);
+        btnDispositivo = findViewById(R.id.btnDispositivo);
         btnDispositivo.setOnClickListener(this);
-        btnConfigurar = (Button) findViewById(R.id.btnConfigurar);
+        btnConfigurar = findViewById(R.id.btnConfigurar);
         btnConfigurar.setOnClickListener(this);
-        btnFecha = (Button) findViewById(R.id.btnFecha);
+        btnFecha = findViewById(R.id.btnFecha);
         btnFecha.setOnClickListener(this);
-        tvJson = (TextView) findViewById(R.id.tvJson);
+        btnSerialize = findViewById(R.id.btnSerialize);
+        btnSerialize.setOnClickListener(this);
+        tvJson = findViewById(R.id.tvJson);
     }
 
     @Override
@@ -145,6 +146,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             eventBus.post(new PrepareDevicesListEvent());
         } else if (v == btnFecha) {
             eventBus.post(new AudioMothSetDateEvent(new Date()));
+        } else if (v == btnSerialize) {
+            String ultrasonic = getJsonFromAssets(this, "Ultrasonico.json");
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            RecordingSettings rsTest = gson.fromJson(ultrasonic, RecordingSettings.class);
+            rsTest.setDeviceInfo(new DeviceInfo("CAFEBABE", "1.4.4", "4.5", new Date()));
+            byte[] arr = rsTest.serializeToBytes();
+            RecordingSettings rsDeserialize = new RecordingSettings(arr);
+            rsDeserialize.setDeviceInfo(new DeviceInfo("CAFEBABE", "1.4.4", "4.5", new Date()));
+
+            String json = gson.toJson(rsDeserialize);
+            Log.d("json rsDeserialize", json);
+            Log.v(TAG, byteToHexString(arr));
+            Log.v(TAG, "Equals = " + (rsDeserialize.equals(rsTest)?"YES":"NO"));
+
         }
     }
 
@@ -175,9 +190,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public void onEvent(AudioMothConfigReceiveEvent event){
-        Log.d(TAG,"AudioMothConfigReceiveEvent");
-        if(event.getRecordingSettings()!=null){
+    public void onEvent(AudioMothConfigReceiveEvent event) {
+        Log.d(TAG, "AudioMothConfigReceiveEvent");
+        if (event.getRecordingSettings() != null) {
             Gson gson = new Gson();
             String json = gson.toJson(event.getRecordingSettings());
             Log.d(TAG, json);
@@ -185,12 +200,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public void onEvent(AudioMothSetDateReceiveEvent event){
-        Log.d(TAG,"AudioMothSetDateReceiveEvent");
-        if(event.getDate()!=null){
+    public void onEvent(AudioMothSetDateReceiveEvent event) {
+        Log.d(TAG, "AudioMothSetDateReceiveEvent");
+        if (event.getDate() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss zz");
-            Log.d(TAG,sdf.format(event.getDate()).toString());
-            tvJson.append(sdf.format(event.getDate()).toString());
+            Log.d(TAG, sdf.format(event.getDate()));
+            tvJson.append(sdf.format(event.getDate()));
         }
     }
 
@@ -204,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         showListOfDevices(event.getCharSequenceArray());
     }
 
-    void showListOfDevices(CharSequence devicesName[]) {
+    void showListOfDevices(CharSequence[] devicesName) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         if (devicesName.length == 0) {

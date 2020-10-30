@@ -20,12 +20,16 @@ package com.undercurrency.audiomoth.usbhid.model;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-import static com.undercurrency.audiomoth.usbhid.USBUtils.*;
+
+import static com.undercurrency.audiomoth.usbhid.USBUtils.readShortFromLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.USBUtils.readIntFromLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.USBUtils.writeIntToLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.USBUtils.writeShortToLittleEndian;
+
 
 
 /**
@@ -33,11 +37,11 @@ import static com.undercurrency.audiomoth.usbhid.USBUtils.*;
  */
 public class RecordingSettings {
 
-    private static int MAX_PERIODS = 5;
-    private static int SECONDS_IN_DAY = 86400;
-    private static int UINT16_MAX = 0xFFFF;
-    private static int UINT32_MAX = 0xFFFFFFFF;
-
+    private static final int MAX_PERIODS = 5;
+    private static final int SECONDS_IN_DAY = 86400;
+    private static final int UINT16_MAX = 0xFFFF;
+    private static final int UINT32_MAX = 0xFFFFFFFF;
+    boolean amplitudeThresholdingEnabled;
     private DeviceInfo deviceInfo;
     private TimePeriods[] timePeriods;
     private boolean ledEnabled;
@@ -45,22 +49,22 @@ public class RecordingSettings {
     private boolean batteryLevelCheckEnabled;
     private int sampleRate;
     private byte gain;
-    private byte recordDuration;
-    private byte sleepDuration;
+    private short recordDuration;
+    private short sleepDuration;
     private boolean localTime;
     private boolean dutyEnabled;
     private boolean passFiltersEnabled;
     private FilterType filterType;
     private int lowerFilter;
     private int higherFilter;
-    boolean amplitudeThresholdingEnabled;
-    private byte amplitudeTreshold;
+    private short amplitudeTreshold;
     private Date firstRecordinDate;
     private Date lastRecordingDate;
 
-    public RecordingSettings(){}
+    public RecordingSettings() {
+    }
 
-    public RecordingSettings(DeviceInfo deviceInfo, TimePeriods[] timePeriods, boolean ledEnabled, boolean lowVoltageCutoffEnabled, boolean batteryLevelCheckEnabled, int sampleRate, byte gain, byte recordDuration, byte sleepDuration, boolean localTime, boolean dutyEnabled, boolean passFiltersEnabled, FilterType filterType, int lowerFilter, int higherFilter, boolean amplitudeThresholdingEnabled, byte amplitudeTreshold, Date firstRecordinDate, Date lastRecordingDate) {
+    public RecordingSettings(DeviceInfo deviceInfo, TimePeriods[] timePeriods, boolean ledEnabled, boolean lowVoltageCutoffEnabled, boolean batteryLevelCheckEnabled, int sampleRate, byte gain, short recordDuration, short sleepDuration, boolean localTime, boolean dutyEnabled, boolean passFiltersEnabled, FilterType filterType, int lowerFilter, int higherFilter, boolean amplitudeThresholdingEnabled, byte amplitudeTreshold, Date firstRecordinDate, Date lastRecordingDate) {
         this.deviceInfo = deviceInfo;
         this.timePeriods = timePeriods;
         this.ledEnabled = ledEnabled;
@@ -80,6 +84,106 @@ public class RecordingSettings {
         this.amplitudeTreshold = amplitudeTreshold;
         this.firstRecordinDate = firstRecordinDate;
         this.lastRecordingDate = lastRecordingDate;
+    }
+
+    /**
+     * @param array
+     */
+    public RecordingSettings(byte[] array) {
+        int i=0;
+        int fecha = readIntFromLittleEndian(array, 0);
+        i += 4;
+        setGain(array[i++]); //5
+        int clockDivider = array[i++]; //6
+        int acquisitionCycles = array[i++]; //7
+        int oversampleRate = array[i++];//8
+        int sampleRate = readIntFromLittleEndian(array, i);//9
+        i += 4;
+        int sampleRateDivider = array[i++];
+        setSleepDuration(readShortFromLittleEndian(array, i));
+        i += 2;
+        setRecordDuration(readShortFromLittleEndian(array, i));
+        i += 2;
+        setLedEnabled(array[i++] != 0);
+        int timePeriodsLength = array[i++];
+        TimePeriods[] tp = new TimePeriods[timePeriodsLength + 1];
+
+        for (int j = 0; j < timePeriodsLength; j++) {
+            int intStartMins = readShortFromLittleEndian(array, i);
+            i += 2;
+            int intEndMins = readShortFromLittleEndian(array, i);
+            i += 2;
+            tp[j] = new TimePeriods(intStartMins, intEndMins);
+        }
+        setTimePeriods(tp);
+        for (int k = 0; k < MAX_PERIODS - timePeriodsLength; k++) {
+            i += 4;
+        }
+        setLocalTime(array[i++] != 0);
+        setLowVoltageCutoffEnabled(array[i++] != 0);
+        setBatteryLevelCheckEnabled(array[i++] != 0);
+        i++;
+        setDutyEnabled(array[i++] != 0);
+        i += 4;
+        i += 4;
+        setPassFiltersEnabled(array[i] != 0 && array[i] != 0);
+        setLowerFilter(readShortFromLittleEndian(array, i));
+        i += 2;
+        setHigherFilter(readShortFromLittleEndian(array, i));
+        i += 2;
+        setAmplitudeTreshold(readShortFromLittleEndian(array, i));
+        i += 2;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        RecordingSettings that = (RecordingSettings) o;
+
+        if (ledEnabled != that.ledEnabled) return false;
+        if (lowVoltageCutoffEnabled != that.lowVoltageCutoffEnabled) return false;
+        if (batteryLevelCheckEnabled != that.batteryLevelCheckEnabled) return false;
+        if (sampleRate != that.sampleRate) return false;
+        if (gain != that.gain) return false;
+        if (recordDuration != that.recordDuration) return false;
+        if (sleepDuration != that.sleepDuration) return false;
+        if (localTime != that.localTime) return false;
+        if (dutyEnabled != that.dutyEnabled) return false;
+        if (passFiltersEnabled != that.passFiltersEnabled) return false;
+        if (lowerFilter != that.lowerFilter) return false;
+        if (higherFilter != that.higherFilter) return false;
+        if (amplitudeThresholdingEnabled != that.amplitudeThresholdingEnabled) return false;
+        if (amplitudeTreshold != that.amplitudeTreshold) return false;
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
+        if (!Arrays.equals(timePeriods, that.timePeriods)) return false;
+        if (filterType != that.filterType) return false;
+        if (!firstRecordinDate.equals(that.firstRecordinDate)) return false;
+        return lastRecordingDate.equals(that.lastRecordingDate);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Arrays.hashCode(timePeriods);
+        result = 31 * result + (ledEnabled ? 1 : 0);
+        result = 31 * result + (lowVoltageCutoffEnabled ? 1 : 0);
+        result = 31 * result + (batteryLevelCheckEnabled ? 1 : 0);
+        result = 31 * result + sampleRate;
+        result = 31 * result + (int) gain;
+        result = 31 * result + (int) recordDuration;
+        result = 31 * result + (int) sleepDuration;
+        result = 31 * result + (localTime ? 1 : 0);
+        result = 31 * result + (dutyEnabled ? 1 : 0);
+        result = 31 * result + (passFiltersEnabled ? 1 : 0);
+        result = 31 * result + filterType.hashCode();
+        result = 31 * result + lowerFilter;
+        result = 31 * result + higherFilter;
+        result = 31 * result + (amplitudeThresholdingEnabled ? 1 : 0);
+        result = 31 * result + (int) amplitudeTreshold;
+        result = 31 * result + firstRecordinDate.hashCode();
+        result = 31 * result + lastRecordingDate.hashCode();
+        return result;
     }
 
     /**
@@ -105,33 +209,33 @@ public class RecordingSettings {
         int index = 0;
 
 
-        writeLittleEndianBytes(serialization, index, 4, unixTime);
+        writeIntToLittleEndian(serialization, index,  unixTime);
         index += 4;
         serialization[index++] = getGain();
-        config = Configurations.getConfig((int)getSampleRate()/1000, getDeviceInfo().isOlderSemanticVersion());
+        config = Configurations.getConfig(getSampleRate() / 1000, getDeviceInfo().isOlderSemanticVersion());
         serialization[index++] = config.getClockDivider();
         serialization[index++] = config.getAcquisitionCycles();
         serialization[index++] = config.getOversampleRate();
-        writeLittleEndianBytes(serialization, index, 4, config.getSampleRate());
+        writeIntToLittleEndian(serialization, index, config.getSampleRate());
         index += 4;
         serialization[index++] = config.getSampleRateDivider();
-        writeLittleEndianBytes(serialization, index, 2, getSleepDuration());
+        writeShortToLittleEndian(serialization, index,  getSleepDuration());
         index += 2;
-        writeLittleEndianBytes(serialization, index, 2, getRecordDuration());
+        writeShortToLittleEndian(serialization, index,  getRecordDuration());
         index += 2;
         serialization[index++] = (byte) (isLedEnabled() ? 1 : 0);
         Arrays.sort(timePeriods);
         serialization[index++] = (byte) timePeriods.length;
         for (int i = 0; i < timePeriods.length; i++) {
-            writeLittleEndianBytes(serialization, index, 2, timePeriods[i].getStartMins());
+            writeShortToLittleEndian(serialization, index,  (short)timePeriods[i].getStartMins());
             index += 2;
-            writeLittleEndianBytes(serialization, index, 2, timePeriods[i].getEndMins());
+            writeShortToLittleEndian(serialization, index,  (short)timePeriods[i].getEndMins());
             index += 2;
         }
         for (int i = 0; i < MAX_PERIODS - timePeriods.length; i++) {
-            writeLittleEndianBytes(serialization, index, 2, 0);
+            writeShortToLittleEndian(serialization, index,(short) 0);
             index += 2;
-            writeLittleEndianBytes(serialization, index, 2, 0);
+            writeShortToLittleEndian(serialization, index, (short) 0);
             index += 2;
         }
         serialization[index++] = (byte) (isLocalTime() ? calculateTimezoneOffsetHours() : 0);
@@ -155,16 +259,16 @@ public class RecordingSettings {
         Date lastRecordingDateTimestamp = new Date();
         if (getLastRecordingDate() != null && isLocalTime()) {
             /* Make latestRecordingTime timestamp inclusive by setting it to the end of the chosen day */
-           lastRecordingTime = fixTimeZone(getLastRecordingDate()) + SECONDS_IN_DAY;
+            lastRecordingTime = fixTimeZone(getLastRecordingDate()) + SECONDS_IN_DAY;
         }
 
         /* Check ranges of values before sending */
         earliestRecordingTime = Math.min(UINT32_MAX, earliestRecordingTime);
         lastRecordingTime = Math.min(UINT32_MAX, lastRecordingTime);
 
-        writeLittleEndianBytes(serialization, index, 4, earliestRecordingTime);
+        writeIntToLittleEndian(serialization, index, earliestRecordingTime);
         index += 4;
-        writeLittleEndianBytes(serialization, index, 4, lastRecordingTime);
+        writeIntToLittleEndian(serialization, index, lastRecordingTime);
         index += 4;
 
         /* Filter settings */
@@ -172,7 +276,7 @@ public class RecordingSettings {
             switch (getFilterType()) {
                 case LOW:
                     setLowerFilter(UINT16_MAX);
-                    setHigherFilter((int) (getHigherFilter() / 100));
+                    setHigherFilter(getHigherFilter() / 100);
                     break;
                 case HIGH:
                     setLowerFilter(getLowerFilter() / 100);
@@ -188,80 +292,29 @@ public class RecordingSettings {
             setLowerFilter(0);
             setHigherFilter(0);
         }
-        writeLittleEndianBytes(serialization, index, 2, getLowerFilter());
+        writeShortToLittleEndian(serialization, index, (short)getLowerFilter());
         index += 2;
-        writeLittleEndianBytes(serialization, index, 2, getHigherFilter());
+        writeShortToLittleEndian(serialization, index,  (short)getHigherFilter());
         index += 2;
         /* CMV settings */
-        writeLittleEndianBytes(serialization, index, 2, getAmplitudeTreshold());
+        writeShortToLittleEndian(serialization, index,  getAmplitudeTreshold());
         index += 2;
 
         return serialization;
     }
 
-    /**
-     *
-     * @param array
-     */
-    public RecordingSettings(byte[] array){
-
-       int i =0;
-       int fecha = readIntFromLittleEndian(array,i);
-       i+=4;
-       setGain(array[i++]);
-        int clockDivider = array[i++];
-        int acquisitionCycles = array[i++];
-        int oversampleRate = array[i++];
-        int sampleRate = readIntFromLittleEndian(array,i);
-        i+=4;
-        int sampleRateDivider = array[i++];
-        setSleepDuration(readByteFromLittleEndian(array,i));
-        i+=2;
-        setRecordDuration(readByteFromLittleEndian(array,i));
-        i+=2;
-        setLedEnabled(array[i++]==0);
-        int timePeriodsLength = array[i];
-        TimePeriods[] tp = new TimePeriods[timePeriodsLength+1];
-
-        for(int j=0 ; j < timePeriodsLength; j++){
-          int intStartMins = (int) readByteFromLittleEndian(array,i);
-          i+=2;
-          int intEndMins = (int) readByteFromLittleEndian(array,i);
-          i+=2;
-          tp[j]= new TimePeriods(intStartMins,intEndMins);
-        }
-        setTimePeriods(tp);
-        for(int k=0; k<MAX_PERIODS-timePeriodsLength;k++){
-           i+=4;
-        }
-        setLocalTime(array[i++]!=0);
-        setLowVoltageCutoffEnabled(array[i++]!=0);
-        setBatteryLevelCheckEnabled(array[i++]!=0);
-        i++;
-        setDutyEnabled(array[i++]!=0);
-        i+=4;
-        i+=4;
-        setPassFiltersEnabled(array[i]!=0 && array[i]!=0);
-        setLowerFilter(readByteFromLittleEndian(array,i));
-        i+=2;
-        setHigherFilter(readByteFromLittleEndian(array,i));
-        i+=2;
-        setAmplitudeTreshold(readByteFromLittleEndian(array,i));
-        i+=2;
-    }
-
     private int fixTimeZone(Date aDate) {
         DateTime today = new DateTime();
-        int dayDiff = today.getDayOfMonth()-  (new DateTime(DateTimeZone.UTC)).getDayOfMonth();
+        int dayDiff = today.getDayOfMonth() - (new DateTime(DateTimeZone.UTC)).getDayOfMonth();
         int timezoneOffset = -60 * dayDiff;
 
         int day = new DateTime(aDate).getDayOfMonth() - dayDiff;
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(aDate);
-        int seconds = calendar.get(Calendar.SECOND)-timezoneOffset;
-        calendar.set(Calendar.DAY_OF_MONTH,day);
-        calendar.set(Calendar.SECOND,seconds);
-        return (int) (calendar.getTime().getTime())/10000;
+        int seconds = calendar.get(Calendar.SECOND) - timezoneOffset;
+        calendar.set(Calendar.DAY_OF_MONTH, day);
+        calendar.set(Calendar.SECOND, seconds);
+        return (int) (calendar.getTime().getTime()) / 10000;
     }
 
     private int calculateTimezoneOffsetMins() {
@@ -273,8 +326,6 @@ public class RecordingSettings {
         int tzOffset = TimeZone.getDefault().getOffset(new Date().getTime()) / 1000 / 60 / 60;
         return tzOffset;
     }
-
-
 
 
     public TimePeriods[] getTimePeriods() {
@@ -325,19 +376,19 @@ public class RecordingSettings {
         this.gain = gain;
     }
 
-    public byte getRecordDuration() {
+    public short getRecordDuration() {
         return recordDuration;
     }
 
-    public void setRecordDuration(byte recordDuration) {
+    public void setRecordDuration(short recordDuration) {
         this.recordDuration = recordDuration;
     }
 
-    public byte getSleepDuration() {
+    public short getSleepDuration() {
         return sleepDuration;
     }
 
-    public void setSleepDuration(byte sleepDuration) {
+    public void setSleepDuration(short sleepDuration) {
         this.sleepDuration = sleepDuration;
     }
 
@@ -397,11 +448,11 @@ public class RecordingSettings {
         this.amplitudeThresholdingEnabled = amplitudeThresholdingEnabled;
     }
 
-    public byte getAmplitudeTreshold() {
+    public short getAmplitudeTreshold() {
         return amplitudeTreshold;
     }
 
-    public void setAmplitudeTreshold(byte amplitudeTreshold) {
+    public void setAmplitudeTreshold(short amplitudeTreshold) {
         this.amplitudeTreshold = amplitudeTreshold;
     }
 

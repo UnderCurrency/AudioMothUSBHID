@@ -4,4 +4,5 @@
     <string name="sendConfiguration">Configurar</string>
     <string name="CONFIG_HORA">Fijar Fecha</string>
     <string name="DEVICE_ATTACHED">Dispositivo conectado</string>
+    <string name="SERIALIZE">Test Serialization</string>
 </resources>

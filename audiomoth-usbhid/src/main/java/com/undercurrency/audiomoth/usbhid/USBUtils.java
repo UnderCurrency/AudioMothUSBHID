@@ -18,6 +18,10 @@
 
 package com.undercurrency.audiomoth.usbhid;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
+
 public  class USBUtils{
     public static int toInt(byte b) {
         return (int) b & 0xFF;
@@ -28,26 +32,37 @@ public  class USBUtils{
     }
 
 
-    public static byte readByteFromLittleEndian(byte[] buffer, int start){
-        int a, b, c, d;
-        c = (buffer[start+1]  & 0xFF) << 8;
-        d =  buffer[start]  & 0xFF;
-        return  (byte)( c | d);
+    public static short readShortFromLittleEndian(byte[] buffer, int start){
+        ByteBuffer bb = ByteBuffer.wrap(Arrays.copyOfRange(buffer,start,start+2));
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        return bb.getShort();
     }
     public static int readIntFromLittleEndian(byte[] buffer, int start){
-        int a, b, c, d;
-        a = (buffer[start+3] & 0xFF) << 24;
-        b = (buffer[start+2]  & 0xFF) << 16;
-        c = (buffer[start+1]  & 0xFF) << 8;
-        d =  buffer[start]  & 0xFF;
-        return  a | b | c | d;
+        ByteBuffer bb = ByteBuffer.wrap(Arrays.copyOfRange(buffer,start,start+4));
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        return bb.getInt();
     }
 
-    public static void writeLittleEndianBytes(byte[] buffer, int start, int byteCount, int value) {
-        for (int i = 0; i < byteCount; i++) {
-            buffer[start + i] = (byte) ((value >> (i * 8)) & 255);
+    public static void writeIntToLittleEndian(byte[] buffer, int start,int value){
+        ByteBuffer bb = ByteBuffer.allocate(4);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        bb.putInt((int) value );
+        byte[] le =  bb.array();
+        for (int i = 0; i < 4; i++) {
+            buffer[start + i] = le[i];
         }
     }
+
+    public static void writeShortToLittleEndian(byte[] buffer, int start, short value){
+        ByteBuffer bb = ByteBuffer.allocate(2);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        bb.putShort( value );
+        byte[] le =  bb.array();
+        for (int i = 0; i < 2; i++) {
+            buffer[start + i] = le[i];
+        }
+    }
+
 
     public static String byteToHexString(byte[] buffer){
         StringBuffer sb = new StringBuffer();

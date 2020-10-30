@@ -83,7 +83,7 @@ public enum Configurations {
                     return Configurations.SAMPLE_RATE_384;
             }
         }
-        return null;
+        return Configurations.SAMPLE_RATE_8;
     }
 
     public byte getTrueSampleRate() {

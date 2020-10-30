@@ -71,4 +71,14 @@
             android:textSize="16sp" />
     </ScrollView>
 
+    <Button
+        android:id="@+id/btnSerialize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:text="@string/SERIALIZE"
+        app:layout_constraintEnd_toStartOf="@+id/btnFecha"
+        app:layout_constraintTop_toBottomOf="@+id/btnDispositivo" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
