@@ -34,7 +34,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.undercurrency.audiomoth.usbhid.USBHidTool;
-import com.undercurrency.audiomoth.usbhid.USBUtils;
+import com.undercurrency.audiomoth.usbhid.ByteJugglingUtils;
 import com.undercurrency.audiomoth.usbhid.events.AudioMothConfigEvent;
 import com.undercurrency.audiomoth.usbhid.events.AudioMothConfigReceiveEvent;
 import com.undercurrency.audiomoth.usbhid.events.AudioMothPacketEvent;
@@ -59,7 +59,7 @@ import java.util.Date;
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.EventBusException;
 
-import static com.undercurrency.audiomoth.usbhid.USBUtils.byteToHexString;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.byteToHexString;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -152,9 +152,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             RecordingSettings rsTest = gson.fromJson(ultrasonic, RecordingSettings.class);
             rsTest.setDeviceInfo(new DeviceInfo("CAFEBABE", "1.4.4", "4.5", new Date()));
             byte[] arr = rsTest.serializeToBytes();
+            Log.d(TAG,"Original JSON-ByteArray");
+            Log.d(TAG,byteToHexString(arr));
             RecordingSettings rsDeserialize = new RecordingSettings(arr);
             rsDeserialize.setDeviceInfo(new DeviceInfo("CAFEBABE", "1.4.4", "4.5", new Date()));
-
+            Log.d(TAG,"Same JSON-ByteArray");
+            Log.d(TAG,byteToHexString(arr));
             String json = gson.toJson(rsDeserialize);
             Log.d("json rsDeserialize", json);
             Log.v(TAG, byteToHexString(arr));
@@ -211,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void onEvent(USBDataReceiveEvent event) {
         Log.v(TAG, "USBDataReceiveEvent " + event.getBytesCount());
-        Log.d(TAG, USBUtils.byteToHexString(event.getData()));
+        Log.d(TAG, ByteJugglingUtils.byteToHexString(event.getData()));
 
     }
 

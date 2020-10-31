@@ -20,15 +20,13 @@ package com.undercurrency.audiomoth.usbhid.events;
 
 import java.util.Date;
 
-import static com.undercurrency.audiomoth.usbhid.USBUtils.readIntFromLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readDateFromByteArray;
 
 public class AudioMothSetDateReceiveEvent {
 
     private Date date;
     public AudioMothSetDateReceiveEvent(byte[] buffer){
-        int time = readIntFromLittleEndian(buffer,0);
-        this.date = new Date();
-        this.date.setTime(time);
+        this.date= readDateFromByteArray(buffer,0);
     }
 
     public Date getDate(){

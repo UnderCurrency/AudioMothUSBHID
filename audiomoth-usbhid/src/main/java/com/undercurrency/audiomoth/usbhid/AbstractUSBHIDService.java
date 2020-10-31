@@ -37,7 +37,6 @@ import com.undercurrency.audiomoth.usbhid.events.PrepareDevicesListEvent;
 import com.undercurrency.audiomoth.usbhid.events.SelectDeviceEvent;
 import com.undercurrency.audiomoth.usbhid.events.USBDataSendEvent;
 
-import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;

@@ -1,5 +1,8 @@
 package com.undercurrency.audiomoth.usbhid.model;
 
+/**
+ * The AudioMothOperations represents all the byte commands that the AudioMoth firmware can execute
+ */
 public enum AudioMothOperations {
     NO_OPERATION(0X00),
     USB_MSG_TYPE_GET_TIME (0x01),

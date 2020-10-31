@@ -20,6 +20,7 @@ package com.undercurrency.audiomoth.usbhid.model;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Date;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readDateFromByteArray;
 
 /**
  * DeviceInfo a pojo to hold the basic device identification for an AM device
@@ -32,7 +33,10 @@ public class DeviceInfo {
     private Date date;
 
 
-
+    /**
+     * Create DeviceInfo from byte array
+     * @param fromArray
+     */
     public DeviceInfo(byte[] fromArray){
         date = readDate(fromArray,1);
         deviceId = readDeviceId(fromArray,1+4);
@@ -105,8 +109,7 @@ public class DeviceInfo {
     }
 
     private Date readDate(byte[]  buffer, int offset){
-        long unixTimestamp = (buffer[offset] & 0xFF) + ((buffer[offset + 1] & 0xFF) << 8) + ((buffer[offset + 2] & 0xFF) << 16) + ((buffer[offset + 3] & 0xFF) << 24);
-        return new Date(unixTimestamp * 1000);
+       return readDateFromByteArray(buffer,offset);
     }
 
     private String readDeviceId(byte[] buffer, int offset){

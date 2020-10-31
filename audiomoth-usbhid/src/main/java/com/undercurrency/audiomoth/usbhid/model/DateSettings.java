@@ -1,7 +1,10 @@
 package com.undercurrency.audiomoth.usbhid.model;
 
 import java.util.Date;
-
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeDateToByteArray;
+/**
+ * The DateSettings class represents a value holder
+ */
 public class DateSettings {
 
     private Date date;
@@ -19,12 +22,7 @@ public class DateSettings {
     }
 
     public byte[] serializeToBytes(){
-        int timestamp = (int)getDate().getTime()/1000;
-        byte[] bytes = new byte[4];
-        bytes[3] = (byte) ((timestamp>>24) & 0xFF);
-        bytes[2] = (byte) ((timestamp>>16) & 0xFF);
-        bytes[1] = (byte) ((timestamp>>8) & 0xFF);
-        bytes[0] = (byte) (timestamp & 0xFF);
-        return bytes;
+        return writeDateToByteArray(getDate());
+
     }
 }

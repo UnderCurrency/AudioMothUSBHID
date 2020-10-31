@@ -25,15 +25,15 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-import static com.undercurrency.audiomoth.usbhid.USBUtils.readShortFromLittleEndian;
-import static com.undercurrency.audiomoth.usbhid.USBUtils.readIntFromLittleEndian;
-import static com.undercurrency.audiomoth.usbhid.USBUtils.writeIntToLittleEndian;
-import static com.undercurrency.audiomoth.usbhid.USBUtils.writeShortToLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readShortFromLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readIntFromLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeIntToLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeShortToLittleEndian;
 
 
 
 /**
- * RecordingSettings a POJO holding all the AM settings
+ * RecordingSettings a POJO holding all the AudioMoth settings
  */
 public class RecordingSettings {
 
@@ -42,29 +42,29 @@ public class RecordingSettings {
     private static final int UINT16_MAX = 0xFFFF;
     private static final int UINT32_MAX = 0xFFFFFFFF;
     boolean amplitudeThresholdingEnabled;
-    private DeviceInfo deviceInfo;
+    private transient DeviceInfo deviceInfo;
     private TimePeriods[] timePeriods;
     private boolean ledEnabled;
     private boolean lowVoltageCutoffEnabled;
     private boolean batteryLevelCheckEnabled;
     private int sampleRate;
     private byte gain;
-    private short recordDuration;
-    private short sleepDuration;
+    private int recordDuration;
+    private int sleepDuration;
     private boolean localTime;
     private boolean dutyEnabled;
     private boolean passFiltersEnabled;
     private FilterType filterType;
     private int lowerFilter;
     private int higherFilter;
-    private short amplitudeTreshold;
+    private int amplitudeThreshold;
     private Date firstRecordinDate;
     private Date lastRecordingDate;
 
     public RecordingSettings() {
     }
 
-    public RecordingSettings(DeviceInfo deviceInfo, TimePeriods[] timePeriods, boolean ledEnabled, boolean lowVoltageCutoffEnabled, boolean batteryLevelCheckEnabled, int sampleRate, byte gain, short recordDuration, short sleepDuration, boolean localTime, boolean dutyEnabled, boolean passFiltersEnabled, FilterType filterType, int lowerFilter, int higherFilter, boolean amplitudeThresholdingEnabled, byte amplitudeTreshold, Date firstRecordinDate, Date lastRecordingDate) {
+    public RecordingSettings(DeviceInfo deviceInfo, TimePeriods[] timePeriods, boolean ledEnabled, boolean lowVoltageCutoffEnabled, boolean batteryLevelCheckEnabled, int sampleRate, byte gain, short recordDuration, short sleepDuration, boolean localTime, boolean dutyEnabled, boolean passFiltersEnabled, FilterType filterType, int lowerFilter, int higherFilter, boolean amplitudeThresholdingEnabled, byte amplitudeThreshold, Date firstRecordinDate, Date lastRecordingDate) {
         this.deviceInfo = deviceInfo;
         this.timePeriods = timePeriods;
         this.ledEnabled = ledEnabled;
@@ -81,12 +81,13 @@ public class RecordingSettings {
         this.lowerFilter = lowerFilter;
         this.higherFilter = higherFilter;
         this.amplitudeThresholdingEnabled = amplitudeThresholdingEnabled;
-        this.amplitudeTreshold = amplitudeTreshold;
+        this.amplitudeThreshold = amplitudeThreshold;
         this.firstRecordinDate = firstRecordinDate;
         this.lastRecordingDate = lastRecordingDate;
     }
 
     /**
+     * Creates a new RecordingSettings from a byte array
      * @param array
      */
     public RecordingSettings(byte[] array) {
@@ -98,6 +99,7 @@ public class RecordingSettings {
         int acquisitionCycles = array[i++]; //7
         int oversampleRate = array[i++];//8
         int sampleRate = readIntFromLittleEndian(array, i);//9
+        setSampleRate(sampleRate);
         i += 4;
         int sampleRateDivider = array[i++];
         setSleepDuration(readShortFromLittleEndian(array, i));
@@ -119,20 +121,22 @@ public class RecordingSettings {
         for (int k = 0; k < MAX_PERIODS - timePeriodsLength; k++) {
             i += 4;
         }
-        setLocalTime(array[i++] != 0);
-        setLowVoltageCutoffEnabled(array[i++] != 0);
-        setBatteryLevelCheckEnabled(array[i++] != 0);
+        setLocalTime(array[i++]==0?false:true);
+        setLowVoltageCutoffEnabled(array[i++]==0?false:true);
+        setBatteryLevelCheckEnabled(array[i++]==0?false:true);
         i++;
-        setDutyEnabled(array[i++] != 0);
+        setDutyEnabled(array[i++]==0?false:true);
         i += 4;
         i += 4;
-        setPassFiltersEnabled(array[i] != 0 && array[i] != 0);
+
         setLowerFilter(readShortFromLittleEndian(array, i));
         i += 2;
         setHigherFilter(readShortFromLittleEndian(array, i));
         i += 2;
-        setAmplitudeTreshold(readShortFromLittleEndian(array, i));
-        i += 2;
+
+        setPassFiltersEnabled(!(getLowerFilter()==0 && getHigherFilter()==0));
+        setAmplitudeThreshold(readShortFromLittleEndian(array, i));
+        setAmplitudeThresholdingEnabled(getAmplitudeThreshold()>0);
     }
 
     @Override
@@ -155,7 +159,7 @@ public class RecordingSettings {
         if (lowerFilter != that.lowerFilter) return false;
         if (higherFilter != that.higherFilter) return false;
         if (amplitudeThresholdingEnabled != that.amplitudeThresholdingEnabled) return false;
-        if (amplitudeTreshold != that.amplitudeTreshold) return false;
+        if (amplitudeThreshold != that.amplitudeThreshold) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(timePeriods, that.timePeriods)) return false;
         if (filterType != that.filterType) return false;
@@ -180,14 +184,14 @@ public class RecordingSettings {
         result = 31 * result + lowerFilter;
         result = 31 * result + higherFilter;
         result = 31 * result + (amplitudeThresholdingEnabled ? 1 : 0);
-        result = 31 * result + (int) amplitudeTreshold;
+        result = 31 * result + (int) amplitudeThreshold;
         result = 31 * result + firstRecordinDate.hashCode();
         result = 31 * result + lastRecordingDate.hashCode();
         return result;
     }
 
     /**
-     * Convert the Recording Settings object to the byte array representation for AM plus 0x06
+     * Convert a RecordingSettings object to a byte array representation for AudioMoth
      * AM uses this byte array to define the operation modes in runtime.
      * In the firmware, when the device receives the config data via USB in a form of byte array, it
      * copies to a C structure called configSettings_t, and returns it back to the USB connection
@@ -197,8 +201,8 @@ public class RecordingSettings {
      * <p>
      * Note: the javascript cousin of this code checks the presence in the ui of < 3 sample rate
      * settings to determine the semantic version, we will ignore this, after comparing
-     * the firmware 1.4.4 to 1.3.0, the struct in the firmware differs from several fields,
-     * blame the bizarre logic around this check. If it is lower to 1.4.4 it only have 3 posible configurations
+     * the firmware 1.4.4 to 1.3.0, the struct in the firmware differs from several fields.
+     * If it is lower to 1.4.4 it only have 3 posible configurations
      * @see <a href="https://github.com/OpenAcousticDevices/AudioMoth-Configuration-App/blob/master/uiIndex.js#L217"></a>
      * an also @see <a href="https://github.com/OpenAcousticDevices/AudioMoth-Configuration-App/blob/master/constants.js#L83"></a>
      */
@@ -219,9 +223,9 @@ public class RecordingSettings {
         writeIntToLittleEndian(serialization, index, config.getSampleRate());
         index += 4;
         serialization[index++] = config.getSampleRateDivider();
-        writeShortToLittleEndian(serialization, index,  getSleepDuration());
+        writeShortToLittleEndian(serialization, index,  (short)getSleepDuration());
         index += 2;
-        writeShortToLittleEndian(serialization, index,  getRecordDuration());
+        writeShortToLittleEndian(serialization, index, (short) getRecordDuration());
         index += 2;
         serialization[index++] = (byte) (isLedEnabled() ? 1 : 0);
         Arrays.sort(timePeriods);
@@ -297,7 +301,7 @@ public class RecordingSettings {
         writeShortToLittleEndian(serialization, index,  (short)getHigherFilter());
         index += 2;
         /* CMV settings */
-        writeShortToLittleEndian(serialization, index,  getAmplitudeTreshold());
+        writeShortToLittleEndian(serialization, index, isAmplitudeThresholdingEnabled()? (short) getAmplitudeThreshold() :(short)0);
         index += 2;
 
         return serialization;
@@ -376,19 +380,19 @@ public class RecordingSettings {
         this.gain = gain;
     }
 
-    public short getRecordDuration() {
+    public int getRecordDuration() {
         return recordDuration;
     }
 
-    public void setRecordDuration(short recordDuration) {
+    public void setRecordDuration(int recordDuration) {
         this.recordDuration = recordDuration;
     }
 
-    public short getSleepDuration() {
+    public int getSleepDuration() {
         return sleepDuration;
     }
 
-    public void setSleepDuration(short sleepDuration) {
+    public void setSleepDuration(int sleepDuration) {
         this.sleepDuration = sleepDuration;
     }
 
@@ -448,12 +452,12 @@ public class RecordingSettings {
         this.amplitudeThresholdingEnabled = amplitudeThresholdingEnabled;
     }
 
-    public short getAmplitudeTreshold() {
-        return amplitudeTreshold;
+    public int getAmplitudeThreshold() {
+        return amplitudeThreshold;
     }
 
-    public void setAmplitudeTreshold(short amplitudeTreshold) {
-        this.amplitudeTreshold = amplitudeTreshold;
+    public void setAmplitudeThreshold(int amplitudeThreshold) {
+        this.amplitudeThreshold = amplitudeThreshold;
     }
 
     public DeviceInfo getDeviceInfo() {

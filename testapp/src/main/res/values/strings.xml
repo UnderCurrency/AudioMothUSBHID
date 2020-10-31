@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">AudioMoth Test Demo</string>
-    <string name="detectDevice">Detectar</string>
-    <string name="sendConfiguration">Configurar</string>
-    <string name="CONFIG_HORA">Fijar Fecha</string>
-    <string name="DEVICE_ATTACHED">Dispositivo conectado</string>
+    <string name="detectDevice">Detect</string>
+    <string name="sendConfiguration">Configure</string>
+    <string name="CONFIG_HORA">Set date</string>
+    <string name="DEVICE_ATTACHED">Device attached</string>
     <string name="SERIALIZE">Test Serialization</string>
+    <string name="MESSAGE_CONNECT_YOUR_USB_HID_DEVICE">Please connect your USB device</string>
+    <string name="MESSAGE_SELECT_YOUR_USB_HID_DEVICE">Please select your USB device</string>
 </resources>
