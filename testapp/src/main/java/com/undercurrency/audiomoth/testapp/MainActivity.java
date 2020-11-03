@@ -92,6 +92,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return rawOutput.toString();
     }
 
+    /**
+     * First step:
+     * Add an event bus in onCreate method
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,6 +121,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tvJson = findViewById(R.id.tvJson);
     }
 
+    /**
+     * Second step: write a function called startService with a new Intent to all USBHidTool.class
+     * this call start up the android service responsible for calling audio moth
+     */
+    private void startService() {
+        usbhidService = new Intent(this, USBHidTool.class);
+        startService(usbhidService);
+    }
+
+    /**
+     * Third step:
+     * In onStart method add a call to startService() and a call to eventBus.register(this)
+     *
+     */
     @Override
     protected void onStart() {
         super.onStart();
@@ -129,6 +148,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onStop();
     }
 
+    /**
+     * Fourth step:
+     * The way to interact with audiomoth is by calling events to configure it,
+     *
+     * If you want to receive the date, firmware and serial number you must send a
+     * eventBus.post(PrepareDevicesListEvent()) and write the corresponding code to receive the data
+     * on(AudioMothPacketReceiveEvent event), inside this event lives an object called DeviceConfig.
+     *
+     * If you want to set the Date to the device, you must send the corresponding event
+     * eventBus.post(new AudioMothSetDateEvent(new Date())); and write the corresponding code to receive
+     * the response event onEvent(AudioMothSetDateReceiveEvent event) , inside this event lives the Date from the device.
+     *
+     * If you want to set the AudioMothConfig , you must send the corresponding event
+     * eventBus.post(new AudioMothConfigEvent(rs)); with the RecordingSettings object set,
+     * you must create a RecordingSettings object with all the values
+     * The RecordingSettings must include an instance of DeviceInfo, so  by example,
+     * before that you need to call at least the PrepareDevicesListEvent and receive the DeviceConfig
+     * and then set it to the new RecordingSettings. Then you must receive
+     * the event onEvent(AudioMothConfigReceiveEvent event),
+     * inside this event lives a regenerated RecordingSettings reconstructed from the response back from AudioMoth
+     *
+     */
     @Override
     public void onClick(View v) {
         if (v == btnConfigurar) {
@@ -166,11 +207,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void startService() {
-        usbhidService = new Intent(this, USBHidTool.class);
-        startService(usbhidService);
-    }
 
+    /**
+     * Fourth step:
+     * Write a onEvent call  to detect the DeviceAttachedEvent
+     * @param event
+     */
     public void onEvent(DeviceAttachedEvent event) {
         Toast.makeText(getApplicationContext(), getString(R.string.DEVICE_ATTACHED), Toast.LENGTH_LONG);
         eventBus.post(new AudioMothPacketEvent());
