@@ -5,7 +5,7 @@ Currently works for Firmware version 1.4.4
 
 Portions from https://github.com/452/USBHIDTerminal/
     
-# Quick Start Guide
+# Compile guide
 
  1. Clone this repo.
  2. Open it in Android Studio
@@ -60,7 +60,28 @@ serializeToBytes and the corresponding RecordingSettings(byte[] array) construct
 
 To use this aar you may compile it, and then add it in your module gradle.properties like this:
 
-import 'audiomoth-usbhid-debug.aar'
+In project structure: 
+
+1. Create a folder in libs directory, such as aars.
+2. Put your aar lib into the aars folder.
+3. Add the code snippet
+
+repositories {
+    flatDir {
+        dirs 'libs/aars'
+    }
+}
+
+to your gradle.properties app module. 
+
+4. Add a dependency in the build.gradle file that belongs to your app module.
+dependencies {
+    ...
+    implementation (name:'audiomoth-usbhid-1.0-debug', ext:'aar')
+    implementation 'de.greenrobot:eventbus:2.4.0'
+}
+
+
 
 In an Activity
 
@@ -70,9 +91,9 @@ the android service responsible for calling AudioMoth
 3. In onStart method add a call to startService() and a call to eventBus.register(this)
 4. The way to interact with audiomoth is by calling events to configure it:
 
-4.1 If you want to receive the date, firmware and serial number you must send a eventBus.post(PrepareDevicesListEvent()) and write the corresponding code to handle the corresponding event to handle the data on(AudioMothPacketReceiveEvent event), inside this event an object called DeviceConfig is instantiated.
+4.1 If you want to receive the date, firmware and serial number you must send a eventBus.post(PrepareDevicesListEvent()) and write the corresponding code to handle an AudioMothPacketReceiveEvent, inside this event an object called DeviceConfig is instantiated.
 
-4.2 If you want to set the Date to the device, you must send the corresponding event eventBus.post(new AudioMothSetDateEvent(new Date())); and write the corresponding code to receive the response event onEvent(AudioMothSetDateReceiveEvent event) , inside this event lives the Date from the device.
+4.2 If you want to set the Date to the device, you must send the corresponding event eventBus.post(new AudioMothSetDateEvent(new Date())); and write the corresponding code to receive the response AudioMothSetDateReceiveEvent, inside this event lives the Date from the device.
 
 4.3 If you want to set the AudioMothConfig , you must send the corresponding event eventBus.post(new AudioMothConfigEvent(rs)); with the RecordingSettings object set,
 you must create a RecordingSettings object with all the values you want. The RecordingSettings must include an instance of DeviceInfo, so  by example, before that you need to call at least the PrepareDevicesListEvent and receive the DeviceConfig and then set it to the new RecordingSettings. Then you must receive the event onEvent(AudioMothConfigReceiveEvent event), inside this event lives a regenerated RecordingSettings reconstructed from the response back from AudioMoth.
