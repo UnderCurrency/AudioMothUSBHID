@@ -64,7 +64,7 @@ In project structure:
 
 1. Create a folder in libs directory, if it doesn't exists yet.
 2. Put your aar lib into the libs folder.
-3. Add the following dependencies: (the firts includes all the aar files in lib, the second an eventbus handler):
+3. Add the following dependencies: (the first includes all the aar files in lib, the latter an eventbus handler):
 
 ```
 dependencies {
