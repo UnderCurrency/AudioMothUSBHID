@@ -17,6 +17,7 @@
 
 package com.undercurrency.audiomoth.usbhid.model;
 
+import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -25,7 +26,10 @@ import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readDateFromB
 /**
  * DeviceInfo a pojo to hold the basic device identification for an AM device
  */
-public class DeviceInfo {
+public class DeviceInfo implements Serializable {
+
+    private static final long serialVersionUID = 8799656478674716641L;
+
     private static final String SEMANTIC_VERSION="1.4.4";
     private String deviceId;
     private String firmwareVersion;

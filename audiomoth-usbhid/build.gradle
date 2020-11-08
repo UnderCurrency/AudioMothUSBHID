@@ -10,9 +10,10 @@ android {
         minSdkVersion 22
         targetSdkVersion 29
         versionCode 1
-        versionName "1.0"
+        versionName '1.2'
         archivesBaseName = "audiomoth-usbhid-$versionName"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        versionNameSuffix defaultVersionNameSuffix
     }
 
     buildTypes {
