@@ -64,12 +64,14 @@ In project structure:
 
 1. Create a folder in libs directory, if it doesn't exists yet.
 2. Put your aar lib into the libs folder.
-3. Add the code snippet
+3. Add the following dependencies: (the firts includes all the aar files in lib, the second an eventbus handler):
 
 ```
 dependencies {
+    ...
     implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
     implementation 'de.greenrobot:eventbus:2.4.0'
+    ...
 }
 ```
 to your gradle.properties app module. 
