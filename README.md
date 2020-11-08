@@ -63,15 +63,13 @@ To use this aar you may compile it, and then add it in your module gradle.proper
 In project structure: 
 
 1. Create a folder in libs directory, such as aars.
-2. Put your aar lib into the aars folder.
+2. Put your aar lib into the libs folder.
 3. Add the code snippet
-
-repositories {
-    flatDir {
-        dirs 'libs/aars'
-    }
+`
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
 }
-
+`
 to your gradle.properties app module. 
 
 4. Add a dependency in the build.gradle file that belongs to your app module.
