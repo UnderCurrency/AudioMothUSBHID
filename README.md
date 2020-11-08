@@ -62,23 +62,17 @@ To use this aar you may compile it, and then add it in your module gradle.proper
 
 In project structure: 
 
-1. Create a folder in libs directory, such as aars.
+1. Create a folder in libs directory, if it doesn't exists yet.
 2. Put your aar lib into the libs folder.
 3. Add the code snippet
-`
+
+```
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
-}
-`
-to your gradle.properties app module. 
-
-4. Add a dependency in the build.gradle file that belongs to your app module.
-dependencies {
-    ...
-    implementation (name:'audiomoth-usbhid-1.0-debug', ext:'aar')
     implementation 'de.greenrobot:eventbus:2.4.0'
 }
-
+```
+to your gradle.properties app module. 
 
 
 In an Activity
