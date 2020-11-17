@@ -17,12 +17,16 @@
 
 package com.undercurrency.audiomoth.usbhid.model;
 
+import java.io.Serializable;
+
 /**
  * TimePeriods a class to represent time recording intervals for AM device
  */
-public class TimePeriods implements Comparable<TimePeriods> {
-  int startMins;
-  int endMins;
+public class TimePeriods implements Comparable<TimePeriods>, Serializable {
+
+    private static final long serialVersionUID = 8799656478674716611L;
+    int startMins;
+    int endMins;
 
     public TimePeriods(int startMins, int endMins) {
         this.startMins = startMins;
@@ -65,6 +69,6 @@ public class TimePeriods implements Comparable<TimePeriods> {
 
     @Override
     public int compareTo(TimePeriods o) {
-        return this.getStartMins()-o.getStartMins();
+        return this.getStartMins() - o.getStartMins();
     }
 }

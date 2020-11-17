@@ -115,7 +115,8 @@ public class USBHidTool extends AbstractUSBHIDService {
 
     @Override
     public void onDeviceConnected(UsbDevice device) {
-        eventBus.post(new DeviceAttachedEvent());
+        Log.d(TAG,"onDeviceConnected");
+        eventBus.post(new DeviceAttachedEvent(device));
     }
 
     @Override
@@ -125,7 +126,8 @@ public class USBHidTool extends AbstractUSBHIDService {
 
     @Override
     public void onDeviceAttached(UsbDevice device) {
-        eventBus.post(new DeviceAttachedEvent());
+        Log.d(TAG,"onDeviceAttached");
+        eventBus.post(new DeviceAttachedEvent(device));
     }
 
     @Override

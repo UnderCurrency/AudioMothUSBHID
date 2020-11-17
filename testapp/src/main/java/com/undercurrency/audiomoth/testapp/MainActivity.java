@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     /**
-     * Fourth step:
+     *
      * Write a onEvent call  to detect the DeviceAttachedEvent
      * @param event
      */

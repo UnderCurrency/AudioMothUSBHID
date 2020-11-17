@@ -33,6 +33,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.undercurrency.audiomoth.usbhid.events.DeviceAttachedEvent;
+import com.undercurrency.audiomoth.usbhid.events.DeviceReadyEvent;
 import com.undercurrency.audiomoth.usbhid.events.PrepareDevicesListEvent;
 import com.undercurrency.audiomoth.usbhid.events.SelectDeviceEvent;
 import com.undercurrency.audiomoth.usbhid.events.USBDataSendEvent;
@@ -163,6 +165,7 @@ public class AbstractUSBHIDService extends Service {
     public void onEvent(SelectDeviceEvent event) {
         device = (UsbDevice) mUsbManager.getDeviceList().values().toArray()[event.getDevice()];
         mUsbManager.requestPermission(device, mPermissionIntent);
+        eventBus.post(new DeviceReadyEvent());
     }
 
     public void onEventMainThread(PrepareDevicesListEvent event) {

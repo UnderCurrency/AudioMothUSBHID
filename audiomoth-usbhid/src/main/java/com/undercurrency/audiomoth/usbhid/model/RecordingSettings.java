@@ -22,8 +22,10 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -47,7 +49,7 @@ public class RecordingSettings implements Serializable {
     private static final int UINT32_MAX = 0xFFFFFFFF;
     boolean amplitudeThresholdingEnabled;
     private transient DeviceInfo deviceInfo;
-    private TimePeriods[] timePeriods;
+    private ArrayList<TimePeriods> timePeriods = new ArrayList(5);
     private boolean ledEnabled;
     private boolean lowVoltageCutoffEnabled;
     private boolean batteryLevelCheckEnabled;
@@ -68,7 +70,7 @@ public class RecordingSettings implements Serializable {
     public RecordingSettings() {
     }
 
-    public RecordingSettings(DeviceInfo deviceInfo, TimePeriods[] timePeriods, boolean ledEnabled, boolean lowVoltageCutoffEnabled, boolean batteryLevelCheckEnabled, int sampleRate, byte gain, short recordDuration, short sleepDuration, boolean localTime, boolean dutyEnabled, boolean passFiltersEnabled, FilterType filterType, int lowerFilter, int higherFilter, boolean amplitudeThresholdingEnabled, byte amplitudeThreshold, Date firstRecordinDate, Date lastRecordingDate) {
+    public RecordingSettings(DeviceInfo deviceInfo, ArrayList<TimePeriods> timePeriods, boolean ledEnabled, boolean lowVoltageCutoffEnabled, boolean batteryLevelCheckEnabled, int sampleRate, byte gain, short recordDuration, short sleepDuration, boolean localTime, boolean dutyEnabled, boolean passFiltersEnabled, FilterType filterType, int lowerFilter, int higherFilter, boolean amplitudeThresholdingEnabled, byte amplitudeThreshold, Date firstRecordinDate, Date lastRecordingDate) {
         this.deviceInfo = deviceInfo;
         this.timePeriods = timePeriods;
         this.ledEnabled = ledEnabled;
@@ -112,14 +114,14 @@ public class RecordingSettings implements Serializable {
         i += 2;
         setLedEnabled(array[i++] != 0);
         int timePeriodsLength = array[i++];
-        TimePeriods[] tp = new TimePeriods[timePeriodsLength + 1];
+        ArrayList<TimePeriods> tp = new ArrayList<TimePeriods>(timePeriodsLength + 1);
 
         for (int j = 0; j < timePeriodsLength; j++) {
             int intStartMins = readShortFromLittleEndian(array, i);
             i += 2;
             int intEndMins = readShortFromLittleEndian(array, i);
             i += 2;
-            tp[j] = new TimePeriods(intStartMins, intEndMins);
+            tp.add(j,new TimePeriods(intStartMins, intEndMins));
         }
         setTimePeriods(tp);
         for (int k = 0; k < MAX_PERIODS - timePeriodsLength; k++) {
@@ -130,7 +132,11 @@ public class RecordingSettings implements Serializable {
         setBatteryLevelCheckEnabled(array[i++]==0?false:true);
         i++;
         setDutyEnabled(array[i++]==0?false:true);
+        long startRecordingDate =readIntFromLittleEndian(array,i);
+        setFirstRecordinDate(new Date(startRecordingDate));
         i += 4;
+        long endRecordingDate= readIntFromLittleEndian(array,i);
+        setLastRecordingDate(new Date(endRecordingDate));
         i += 4;
 
         setLowerFilter(readShortFromLittleEndian(array, i));
@@ -164,8 +170,7 @@ public class RecordingSettings implements Serializable {
         if (higherFilter != that.higherFilter) return false;
         if (amplitudeThresholdingEnabled != that.amplitudeThresholdingEnabled) return false;
         if (amplitudeThreshold != that.amplitudeThreshold) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(timePeriods, that.timePeriods)) return false;
+        if (!timePeriods.containsAll(that.timePeriods)) return false;
         if (filterType != that.filterType) return false;
         if (!firstRecordinDate.equals(that.firstRecordinDate)) return false;
         return lastRecordingDate.equals(that.lastRecordingDate);
@@ -173,7 +178,7 @@ public class RecordingSettings implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = Arrays.hashCode(timePeriods);
+        int result = timePeriods.hashCode();
         result = 31 * result + (ledEnabled ? 1 : 0);
         result = 31 * result + (lowVoltageCutoffEnabled ? 1 : 0);
         result = 31 * result + (batteryLevelCheckEnabled ? 1 : 0);
@@ -232,15 +237,15 @@ public class RecordingSettings implements Serializable {
         writeShortToLittleEndian(serialization, index, (short) getRecordDuration());
         index += 2;
         serialization[index++] = (byte) (isLedEnabled() ? 1 : 0);
-        Arrays.sort(timePeriods);
-        serialization[index++] = (byte) timePeriods.length;
-        for (int i = 0; i < timePeriods.length; i++) {
-            writeShortToLittleEndian(serialization, index,  (short)timePeriods[i].getStartMins());
+        Collections.sort(timePeriods);
+        serialization[index++] = (byte) timePeriods.size();
+        for (int i = 0; i < timePeriods.size(); i++) {
+            writeShortToLittleEndian(serialization, index,  (short)timePeriods.get(i).getStartMins());
             index += 2;
-            writeShortToLittleEndian(serialization, index,  (short)timePeriods[i].getEndMins());
+            writeShortToLittleEndian(serialization, index,  (short)timePeriods.get(i).getEndMins());
             index += 2;
         }
-        for (int i = 0; i < MAX_PERIODS - timePeriods.length; i++) {
+        for (int i = 0; i < MAX_PERIODS - timePeriods.size(); i++) {
             writeShortToLittleEndian(serialization, index,(short) 0);
             index += 2;
             writeShortToLittleEndian(serialization, index, (short) 0);
@@ -336,11 +341,11 @@ public class RecordingSettings implements Serializable {
     }
 
 
-    public TimePeriods[] getTimePeriods() {
+    public ArrayList<TimePeriods> getTimePeriods() {
         return timePeriods;
     }
 
-    public void setTimePeriods(TimePeriods[] timePeriods) {
+    public void setTimePeriods(ArrayList<TimePeriods> timePeriods) {
         this.timePeriods = timePeriods;
     }
 
@@ -488,5 +493,68 @@ public class RecordingSettings implements Serializable {
         this.lastRecordingDate = lastRecordingDate;
     }
 
+    public LifeSpan getDailyCount(){
+        LifeSpan ls=null;
+        double periodSecs=0;
+        double completeRecCount=0;
+        double totalCompleteRecCount=0;
+        double truncatedRecTime =0;
+        double truncatedRecCount =0;
+        double totalRecLength=0;
+        double timeRemaining=0;
+        double totalSize=0;
+        boolean upTo = false;
+        if(this.isDutyEnabled()){
+            /* Calculate how many full recording periods fit in the allotted time */
+            for(TimePeriods t : getTimePeriods()) {
+                periodSecs = (t.getEndMins() - t.getStartMins()) * 60;
+                completeRecCount = Math.floor(periodSecs / (this.getRecordDuration() + this.getSleepDuration()));
+
+                 totalRecLength = completeRecCount * (this.getRecordDuration() + this.getSleepDuration());
+                 timeRemaining = timeRemaining = periodSecs - totalRecLength;
+                if (timeRemaining > 0) {
+
+                    if (timeRemaining >= getRecordDuration()) {
+                        completeRecCount += 1;
+                    } else {
+                        truncatedRecTime += timeRemaining;
+                        truncatedRecCount += 1;
+                    }
+                }
+                totalCompleteRecCount += completeRecCount;
+            }
+            totalRecLength = (completeRecCount * this.getRecordDuration()) + truncatedRecTime;
+
+        } else {
+            completeRecCount = getTimePeriods().size();
+            truncatedRecCount = 0;
+            truncatedRecTime = 0;
+            totalRecLength = 0;
+            double maxLength = 0;
+            double length=0;
+            double prevLength=0;
+
+            for (int i = 0; i < completeRecCount; i++) {
+              TimePeriods  period = getTimePeriods().get(i);
+                length = period.getEndMins() - period.getStartMins();
+                /* If the periods differ in size, include 'up to' when describing the file size. If amplitude thresholding is enabled, it already will include this */
+                if (i > 0 && !this.isAmplitudeThresholdingEnabled()) {
+                  TimePeriods  prevPeriod = getTimePeriods().get(i - 1);
+                  prevLength = prevPeriod.getEndMins() - prevPeriod.getStartMins();
+                    if (length != prevLength) {
+                      upTo = true;
+                    }
+                }
+                totalRecLength += length;
+                maxLength = (length > maxLength) ? length : maxLength;
+            }
+            totalRecLength *= 60;
+
+          //  totalSize = this.getSampleRate() / configuration.sampleRateDivider * 2 * totalRecLength;
+        }
+
+        ls = new LifeSpan(totalCompleteRecCount,truncatedRecCount,truncatedRecTime,totalRecLength,0);
+        return ls;
+    }
 }
 

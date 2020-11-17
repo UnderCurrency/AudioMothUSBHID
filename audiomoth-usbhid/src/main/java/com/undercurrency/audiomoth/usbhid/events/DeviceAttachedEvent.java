@@ -17,6 +17,16 @@
 
 package com.undercurrency.audiomoth.usbhid.events;
 
-public class DeviceAttachedEvent {
+import android.hardware.usb.UsbDevice;
 
+public class DeviceAttachedEvent {
+    private UsbDevice usbDevice;
+
+    public UsbDevice getUsbDevice() {
+        return usbDevice;
+    }
+
+    public DeviceAttachedEvent(UsbDevice usbDevice) {
+        this.usbDevice = usbDevice;
+    }
 }
