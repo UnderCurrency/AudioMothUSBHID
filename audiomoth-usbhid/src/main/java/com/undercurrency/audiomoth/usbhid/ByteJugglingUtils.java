@@ -32,7 +32,7 @@ import java.util.Date;
 public  class ByteJugglingUtils {
     /**
      * Converts a single byte to integer
-     * @param byte
+     * @param b
      * @return int
      */
     public static int toInt(byte b) {
@@ -41,7 +41,7 @@ public  class ByteJugglingUtils {
 
     /**
      * Converts a single integer to byte
-     * @param integer
+     * @param c
      * @return byte
      */
     public static byte toByte(int c) {
@@ -94,6 +94,22 @@ public  class ByteJugglingUtils {
     }
 
     /**
+     * Writes an long to a 4 byte array
+     * @param buffer a byte array to write in
+     * @param start index from which to start writing bytes
+     * @param value an integer number
+     */
+    public static void writeLongToLittleEndian(byte[] buffer, int start, long value){
+        ByteBuffer bb= ByteBuffer.allocate(8);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        bb.putLong(value);
+        byte[] le = bb.array();
+        for (int i = 0; i < 4; i++) {
+            buffer[start + i] = le[i];
+        }
+    }
+
+    /**
      * Writes an int to a 2 byte array
      * @param buffer a byte array to write in
      * @param start index from which to start writing bytes
@@ -116,11 +132,19 @@ public  class ByteJugglingUtils {
      * @return Date
      */
     public static Date readDateFromByteArray(byte[] buffer, int start){
-        ByteBuffer bb = ByteBuffer.wrap(Arrays.copyOfRange(buffer,start,start+4));
+        byte[] fakeLongArray = Arrays.copyOfRange(buffer,start,start+4);
+        byte[] longArray = new byte[8];
+        for(int i=0; i<4;i++){
+            longArray[i]=fakeLongArray[i];
+        }
+        for(int i=4; i<8;i++){
+            longArray[i]=0;
+        }
+        ByteBuffer bb = ByteBuffer.wrap(longArray);
         bb.order(ByteOrder.LITTLE_ENDIAN);
         Date date = new Date();
-        long timestamp = bb.getInt();
-        date.setTime(timestamp*1000);
+        long timestamp = bb.getLong();
+        date.setTime(timestamp*1000L);
         return date;
     }
 

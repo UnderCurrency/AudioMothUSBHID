@@ -23,16 +23,17 @@ import org.joda.time.DateTimeZone;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.TimeZone;
 
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readDateFromByteArray;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readShortFromLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readIntFromLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeIntToLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeShortToLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeLongToLittleEndian;
 
 
 
@@ -64,13 +65,13 @@ public class RecordingSettings implements Serializable {
     private int lowerFilter;
     private int higherFilter;
     private int amplitudeThreshold;
-    private Date firstRecordinDate;
+    private Date firstRecordingDate;
     private Date lastRecordingDate;
 
     public RecordingSettings() {
     }
 
-    public RecordingSettings(DeviceInfo deviceInfo, ArrayList<TimePeriods> timePeriods, boolean ledEnabled, boolean lowVoltageCutoffEnabled, boolean batteryLevelCheckEnabled, int sampleRate, byte gain, short recordDuration, short sleepDuration, boolean localTime, boolean dutyEnabled, boolean passFiltersEnabled, FilterType filterType, int lowerFilter, int higherFilter, boolean amplitudeThresholdingEnabled, byte amplitudeThreshold, Date firstRecordinDate, Date lastRecordingDate) {
+    public RecordingSettings(DeviceInfo deviceInfo, ArrayList<TimePeriods> timePeriods, boolean ledEnabled, boolean lowVoltageCutoffEnabled, boolean batteryLevelCheckEnabled, int sampleRate, byte gain, short recordDuration, short sleepDuration, boolean localTime, boolean dutyEnabled, boolean passFiltersEnabled, FilterType filterType, int lowerFilter, int higherFilter, boolean amplitudeThresholdingEnabled, byte amplitudeThreshold, Date firstRecordingDate, Date lastRecordingDate) {
         this.deviceInfo = deviceInfo;
         this.timePeriods = timePeriods;
         this.ledEnabled = ledEnabled;
@@ -88,7 +89,7 @@ public class RecordingSettings implements Serializable {
         this.higherFilter = higherFilter;
         this.amplitudeThresholdingEnabled = amplitudeThresholdingEnabled;
         this.amplitudeThreshold = amplitudeThreshold;
-        this.firstRecordinDate = firstRecordinDate;
+        this.firstRecordingDate = firstRecordingDate;
         this.lastRecordingDate = lastRecordingDate;
     }
 
@@ -132,11 +133,11 @@ public class RecordingSettings implements Serializable {
         setBatteryLevelCheckEnabled(array[i++]==0?false:true);
         i++;
         setDutyEnabled(array[i++]==0?false:true);
-        long startRecordingDate =readIntFromLittleEndian(array,i);
-        setFirstRecordinDate(new Date(startRecordingDate));
+        Date startRecordingDate =readDateFromByteArray(array,i);
+        setFirstRecordingDate(startRecordingDate);
         i += 4;
-        long endRecordingDate= readIntFromLittleEndian(array,i);
-        setLastRecordingDate(new Date(endRecordingDate));
+        Date endRecordingDate= readDateFromByteArray(array,i);
+        setLastRecordingDate(endRecordingDate);
         i += 4;
 
         setLowerFilter(readShortFromLittleEndian(array, i));
@@ -172,7 +173,7 @@ public class RecordingSettings implements Serializable {
         if (amplitudeThreshold != that.amplitudeThreshold) return false;
         if (!timePeriods.containsAll(that.timePeriods)) return false;
         if (filterType != that.filterType) return false;
-        if (!firstRecordinDate.equals(that.firstRecordinDate)) return false;
+        if (!firstRecordingDate.equals(that.firstRecordingDate)) return false;
         return lastRecordingDate.equals(that.lastRecordingDate);
     }
 
@@ -194,7 +195,7 @@ public class RecordingSettings implements Serializable {
         result = 31 * result + higherFilter;
         result = 31 * result + (amplitudeThresholdingEnabled ? 1 : 0);
         result = 31 * result + (int) amplitudeThreshold;
-        result = 31 * result + firstRecordinDate.hashCode();
+        result = 31 * result + firstRecordingDate.hashCode();
         result = 31 * result + lastRecordingDate.hashCode();
         return result;
     }
@@ -262,26 +263,30 @@ public class RecordingSettings implements Serializable {
 
         /* Start/stop dates */
 
-        int earliestRecordingTime = 0;
+        long earliestRecordingTime = 0;
         /* If the timezone difference has caused the day to differ from the day as a UTC time, undo the offset */
-        if (getFirstRecordinDate() != null && isLocalTime()) {
-            earliestRecordingTime = fixTimeZone(getFirstRecordinDate());
+        if (getFirstRecordingDate() != null && isLocalTime()) {
+            earliestRecordingTime = fixTimeZone(getFirstRecordingDate());
+        } else if(getFirstRecordingDate()!=null) {
+            earliestRecordingTime = getFirstRecordingDate().getTime()/1000L;
         }
 
-        int lastRecordingTime = 0;
+        long lastRecordingTime = 0;
         Date lastRecordingDateTimestamp = new Date();
         if (getLastRecordingDate() != null && isLocalTime()) {
             /* Make latestRecordingTime timestamp inclusive by setting it to the end of the chosen day */
             lastRecordingTime = fixTimeZone(getLastRecordingDate()) + SECONDS_IN_DAY;
+        } else if(getLastRecordingDate()!=null){
+            lastRecordingTime =  getLastRecordingDate().getTime()/1000L;
         }
 
         /* Check ranges of values before sending */
-        earliestRecordingTime = Math.min(UINT32_MAX, earliestRecordingTime);
-        lastRecordingTime = Math.min(UINT32_MAX, lastRecordingTime);
+    //    earliestRecordingTime = Math.min(UINT32_MAX, earliestRecordingTime);
+    //    lastRecordingTime = Math.min(UINT32_MAX, lastRecordingTime);
 
-        writeIntToLittleEndian(serialization, index, earliestRecordingTime);
+        writeLongToLittleEndian(serialization, index, earliestRecordingTime);
         index += 4;
-        writeIntToLittleEndian(serialization, index, lastRecordingTime);
+        writeLongToLittleEndian(serialization, index, lastRecordingTime);
         index += 4;
 
         /* Filter settings */
@@ -477,12 +482,12 @@ public class RecordingSettings implements Serializable {
         this.deviceInfo = deviceInfo;
     }
 
-    public Date getFirstRecordinDate() {
-        return firstRecordinDate;
+    public Date getFirstRecordingDate() {
+        return firstRecordingDate;
     }
 
-    public void setFirstRecordinDate(Date firstRecordinDate) {
-        this.firstRecordinDate = firstRecordinDate;
+    public void setFirstRecordingDate(Date firstRecordingDate) {
+        this.firstRecordingDate = firstRecordingDate;
     }
 
     public Date getLastRecordingDate() {

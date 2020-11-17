@@ -14,5 +14,7 @@
   "lowerFilter": 0,
   "higherFilter": 65535,
   "amplitudeThresholdingEnabled": true,
-  "amplitudeThreshold": 36
+  "amplitudeThreshold": 36,
+  "firstRecordingDate": "2020-11-16",
+  "lastRecordingDate": "2020-11-30"
 }
