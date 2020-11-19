@@ -144,6 +144,16 @@ public class RecordingSettings implements Serializable {
         i += 2;
         setHigherFilter(readShortFromLittleEndian(array, i));
         i += 2;
+        if(getLowerFilter()==0&&getHigherFilter()==24000){
+            setFilterType(FilterType.BAND);
+        } else if(getLowerFilter()==0){
+            setFilterType(FilterType.LOW);
+        } else if(getHigherFilter()==24000){
+            setFilterType(FilterType.HIGH);
+        } else{
+            setFilterType(FilterType.BAND);
+        }
+
 
         setPassFiltersEnabled(!(getLowerFilter()==0 && getHigherFilter()==0));
         setAmplitudeThreshold(readShortFromLittleEndian(array, i));
@@ -179,8 +189,9 @@ public class RecordingSettings implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = timePeriods.hashCode();
-        result = 31 * result + (ledEnabled ? 1 : 0);
+        int result = 31 * (ledEnabled ? 1 : 0);
+        if(timePeriods!=null)
+            result = 31 * result + timePeriods.hashCode();
         result = 31 * result + (lowVoltageCutoffEnabled ? 1 : 0);
         result = 31 * result + (batteryLevelCheckEnabled ? 1 : 0);
         result = 31 * result + sampleRate;
@@ -190,12 +201,15 @@ public class RecordingSettings implements Serializable {
         result = 31 * result + (localTime ? 1 : 0);
         result = 31 * result + (dutyEnabled ? 1 : 0);
         result = 31 * result + (passFiltersEnabled ? 1 : 0);
+        if(filterType!=null)
         result = 31 * result + filterType.hashCode();
         result = 31 * result + lowerFilter;
         result = 31 * result + higherFilter;
         result = 31 * result + (amplitudeThresholdingEnabled ? 1 : 0);
         result = 31 * result + (int) amplitudeThreshold;
+        if(firstRecordingDate!=null)
         result = 31 * result + firstRecordingDate.hashCode();
+        if(lastRecordingDate!=null)
         result = 31 * result + lastRecordingDate.hashCode();
         return result;
     }
