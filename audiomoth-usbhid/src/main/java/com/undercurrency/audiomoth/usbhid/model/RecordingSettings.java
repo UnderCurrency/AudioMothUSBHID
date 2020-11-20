@@ -29,12 +29,11 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readDateFromByteArray;
-import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readShortFromLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readIntFromLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readShortFromLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeIntToLittleEndian;
-import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeShortToLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeLongToLittleEndian;
-
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeShortToLittleEndian;
 
 
 /**
@@ -95,10 +94,11 @@ public class RecordingSettings implements Serializable {
 
     /**
      * Creates a new RecordingSettings from a byte array
+     *
      * @param array
      */
     public RecordingSettings(byte[] array) {
-        int i=0;
+        int i = 0;
         int fecha = readIntFromLittleEndian(array, 0);
         i += 4;
         setGain(array[i++]); //5
@@ -122,21 +122,21 @@ public class RecordingSettings implements Serializable {
             i += 2;
             int intEndMins = readShortFromLittleEndian(array, i);
             i += 2;
-            tp.add(j,new TimePeriods(intStartMins, intEndMins));
+            tp.add(j, new TimePeriods(intStartMins, intEndMins));
         }
         setTimePeriods(tp);
         for (int k = 0; k < MAX_PERIODS - timePeriodsLength; k++) {
             i += 4;
         }
-        setLocalTime(array[i++]==0?false:true);
-        setLowVoltageCutoffEnabled(array[i++]==0?false:true);
-        setBatteryLevelCheckEnabled(array[i++]==0?false:true);
+        setLocalTime(array[i++] != 0);
+        setLowVoltageCutoffEnabled(array[i++] != 0);
+        setBatteryLevelCheckEnabled(array[i++] != 0);
         i++;
-        setDutyEnabled(array[i++]==0?false:true);
-        Date startRecordingDate =readDateFromByteArray(array,i);
+        setDutyEnabled(array[i++] != 0);
+        Date startRecordingDate = readDateFromByteArray(array, i);
         setFirstRecordingDate(startRecordingDate);
         i += 4;
-        Date endRecordingDate= readDateFromByteArray(array,i);
+        Date endRecordingDate = readDateFromByteArray(array, i);
         setLastRecordingDate(endRecordingDate);
         i += 4;
 
@@ -144,20 +144,20 @@ public class RecordingSettings implements Serializable {
         i += 2;
         setHigherFilter(readShortFromLittleEndian(array, i));
         i += 2;
-        if(getLowerFilter()==0&&getHigherFilter()==24000){
+        if (getLowerFilter() == 0 && getHigherFilter() == 24000) {
             setFilterType(FilterType.BAND);
-        } else if(getLowerFilter()==0){
+        } else if (getLowerFilter() == 0) {
             setFilterType(FilterType.LOW);
-        } else if(getHigherFilter()==24000){
+        } else if (getHigherFilter() == 24000) {
             setFilterType(FilterType.HIGH);
-        } else{
+        } else {
             setFilterType(FilterType.BAND);
         }
 
 
-        setPassFiltersEnabled(!(getLowerFilter()==0 && getHigherFilter()==0));
+        setPassFiltersEnabled(!(getLowerFilter() == 0 && getHigherFilter() == 0));
         setAmplitudeThreshold(readShortFromLittleEndian(array, i));
-        setAmplitudeThresholdingEnabled(getAmplitudeThreshold()>0);
+        setAmplitudeThresholdingEnabled(getAmplitudeThreshold() > 0);
     }
 
     @Override
@@ -190,27 +190,27 @@ public class RecordingSettings implements Serializable {
     @Override
     public int hashCode() {
         int result = 31 * (ledEnabled ? 1 : 0);
-        if(timePeriods!=null)
+        if (timePeriods != null)
             result = 31 * result + timePeriods.hashCode();
         result = 31 * result + (lowVoltageCutoffEnabled ? 1 : 0);
         result = 31 * result + (batteryLevelCheckEnabled ? 1 : 0);
         result = 31 * result + sampleRate;
         result = 31 * result + (int) gain;
-        result = 31 * result + (int) recordDuration;
-        result = 31 * result + (int) sleepDuration;
+        result = 31 * result + recordDuration;
+        result = 31 * result + sleepDuration;
         result = 31 * result + (localTime ? 1 : 0);
         result = 31 * result + (dutyEnabled ? 1 : 0);
         result = 31 * result + (passFiltersEnabled ? 1 : 0);
-        if(filterType!=null)
-        result = 31 * result + filterType.hashCode();
+        if (filterType != null)
+            result = 31 * result + filterType.hashCode();
         result = 31 * result + lowerFilter;
         result = 31 * result + higherFilter;
         result = 31 * result + (amplitudeThresholdingEnabled ? 1 : 0);
-        result = 31 * result + (int) amplitudeThreshold;
-        if(firstRecordingDate!=null)
-        result = 31 * result + firstRecordingDate.hashCode();
-        if(lastRecordingDate!=null)
-        result = 31 * result + lastRecordingDate.hashCode();
+        result = 31 * result + amplitudeThreshold;
+        if (firstRecordingDate != null)
+            result = 31 * result + firstRecordingDate.hashCode();
+        if (lastRecordingDate != null)
+            result = 31 * result + lastRecordingDate.hashCode();
         return result;
     }
 
@@ -237,7 +237,7 @@ public class RecordingSettings implements Serializable {
         int index = 0;
 
 
-        writeIntToLittleEndian(serialization, index,  unixTime);
+        writeIntToLittleEndian(serialization, index, unixTime);
         index += 4;
         serialization[index++] = getGain();
         config = Configurations.getConfig(getSampleRate() / 1000, getDeviceInfo().isOlderSemanticVersion());
@@ -247,7 +247,7 @@ public class RecordingSettings implements Serializable {
         writeIntToLittleEndian(serialization, index, config.getSampleRate());
         index += 4;
         serialization[index++] = config.getSampleRateDivider();
-        writeShortToLittleEndian(serialization, index,  (short)getSleepDuration());
+        writeShortToLittleEndian(serialization, index, (short) getSleepDuration());
         index += 2;
         writeShortToLittleEndian(serialization, index, (short) getRecordDuration());
         index += 2;
@@ -255,13 +255,13 @@ public class RecordingSettings implements Serializable {
         Collections.sort(timePeriods);
         serialization[index++] = (byte) timePeriods.size();
         for (int i = 0; i < timePeriods.size(); i++) {
-            writeShortToLittleEndian(serialization, index,  (short)timePeriods.get(i).getStartMins());
+            writeShortToLittleEndian(serialization, index, (short) timePeriods.get(i).getStartMins());
             index += 2;
-            writeShortToLittleEndian(serialization, index,  (short)timePeriods.get(i).getEndMins());
+            writeShortToLittleEndian(serialization, index, (short) timePeriods.get(i).getEndMins());
             index += 2;
         }
         for (int i = 0; i < MAX_PERIODS - timePeriods.size(); i++) {
-            writeShortToLittleEndian(serialization, index,(short) 0);
+            writeShortToLittleEndian(serialization, index, (short) 0);
             index += 2;
             writeShortToLittleEndian(serialization, index, (short) 0);
             index += 2;
@@ -281,8 +281,8 @@ public class RecordingSettings implements Serializable {
         /* If the timezone difference has caused the day to differ from the day as a UTC time, undo the offset */
         if (getFirstRecordingDate() != null && isLocalTime()) {
             earliestRecordingTime = fixTimeZone(getFirstRecordingDate());
-        } else if(getFirstRecordingDate()!=null) {
-            earliestRecordingTime = getFirstRecordingDate().getTime()/1000L;
+        } else if (getFirstRecordingDate() != null) {
+            earliestRecordingTime = getFirstRecordingDate().getTime() / 1000L;
         }
 
         long lastRecordingTime = 0;
@@ -290,13 +290,13 @@ public class RecordingSettings implements Serializable {
         if (getLastRecordingDate() != null && isLocalTime()) {
             /* Make latestRecordingTime timestamp inclusive by setting it to the end of the chosen day */
             lastRecordingTime = fixTimeZone(getLastRecordingDate()) + SECONDS_IN_DAY;
-        } else if(getLastRecordingDate()!=null){
-            lastRecordingTime =  getLastRecordingDate().getTime()/1000L;
+        } else if (getLastRecordingDate() != null) {
+            lastRecordingTime = getLastRecordingDate().getTime() / 1000L;
         }
 
         /* Check ranges of values before sending */
-    //    earliestRecordingTime = Math.min(UINT32_MAX, earliestRecordingTime);
-    //    lastRecordingTime = Math.min(UINT32_MAX, lastRecordingTime);
+        //    earliestRecordingTime = Math.min(UINT32_MAX, earliestRecordingTime);
+        //    lastRecordingTime = Math.min(UINT32_MAX, lastRecordingTime);
 
         writeLongToLittleEndian(serialization, index, earliestRecordingTime);
         index += 4;
@@ -324,12 +324,12 @@ public class RecordingSettings implements Serializable {
             setLowerFilter(0);
             setHigherFilter(0);
         }
-        writeShortToLittleEndian(serialization, index, (short)getLowerFilter());
+        writeShortToLittleEndian(serialization, index, (short) getLowerFilter());
         index += 2;
-        writeShortToLittleEndian(serialization, index,  (short)getHigherFilter());
+        writeShortToLittleEndian(serialization, index, (short) getHigherFilter());
         index += 2;
         /* CMV settings */
-        writeShortToLittleEndian(serialization, index, isAmplitudeThresholdingEnabled()? (short) getAmplitudeThreshold() :(short)0);
+        writeShortToLittleEndian(serialization, index, isAmplitudeThresholdingEnabled() ? (short) getAmplitudeThreshold() : (short) 0);
         index += 2;
 
         return serialization;
@@ -512,27 +512,78 @@ public class RecordingSettings implements Serializable {
         this.lastRecordingDate = lastRecordingDate;
     }
 
-    public LifeSpan getDailyCount(){
-        LifeSpan ls=null;
-        double periodSecs=0;
-        double completeRecCount=0;
-        double totalCompleteRecCount=0;
-        double truncatedRecTime =0;
-        double truncatedRecCount =0;
-        double totalRecLength=0;
-        double timeRemaining=0;
-        double totalSize=0;
+    /**
+     * This metod calculates the daily battery consumption and diskspace used
+     *
+     * @return
+     */
+    public LifeSpan getLifeSpan() {
+        /* Energy consumed while device is awaiting an active period */
+        float SLEEP_ENERGY = 0.125f;
+        /* Time spent opening files and waiting for microphone to warm up before recording starts */
+int START_UP_TIME = 2;
+        LifeSpan ls = null;
+        double periodSecs = 0;
+        double completeRecCount = 0;
+        double totalCompleteRecCount = 0;
+        double truncatedRecTime = 0;
+        double truncatedRecCount = 0;
+        double totalRecLength = 0;
+        double timeRemaining = 0;
+        double totalSize = 0;
+        double totalRecCount = 0;
+        boolean upToFile = isAmplitudeThresholdingEnabled();
+        boolean upToTotal = isAmplitudeThresholdingEnabled();
         boolean upTo = false;
-        if(this.isDutyEnabled()){
+        int recLength = this.getRecordDuration();
+        int sleepSecs = this.getSleepDuration();
+        int recSize = 0;
+        double maxLength = 0;
+        double length = 0;
+        double prevLength = 0;
+        double upToSize=0;
+        double maxFileSize=0;
+        double recordingSize=0;
+        double energyUsed=0;
+        double energyPrecision=0;
+
+        for (int i = 0; i < timePeriods.size(); i += 1) {
+
             /* Calculate how many full recording periods fit in the allotted time */
-            for(TimePeriods t : getTimePeriods()) {
+
+            periodSecs = (timePeriods.get(i).getEndMins() - timePeriods.get(i).startMins) * 60;
+            completeRecCount = Math.floor(periodSecs / (recLength + sleepSecs));
+
+            /* Check if a truncated recording will fit in the rest of the period */
+            totalRecLength = completeRecCount * (recLength + sleepSecs);
+            timeRemaining = periodSecs - totalRecLength;
+
+            if (timeRemaining > 0) {
+                if (timeRemaining >= recLength) {
+                    completeRecCount += 1;
+                } else {
+                    truncatedRecTime += timeRemaining;
+                    truncatedRecCount += 1;
+                }
+            }
+            totalCompleteRecCount += completeRecCount;
+        }
+
+        completeRecCount= totalCompleteRecCount;
+
+
+
+
+        /* Calculate how many full recording periods fit in the allotted time */
+        if (this.isDutyEnabled()) {
+            recSize = this.getSampleRate() / getSampleRateDivider(getSampleRate()) * 2 * recLength;
+            for (TimePeriods t : getTimePeriods()) {
                 periodSecs = (t.getEndMins() - t.getStartMins()) * 60;
                 completeRecCount = Math.floor(periodSecs / (this.getRecordDuration() + this.getSleepDuration()));
 
-                 totalRecLength = completeRecCount * (this.getRecordDuration() + this.getSleepDuration());
-                 timeRemaining = timeRemaining = periodSecs - totalRecLength;
+                totalRecLength = completeRecCount * (this.getRecordDuration() + this.getSleepDuration());
+                timeRemaining = timeRemaining = periodSecs - totalRecLength;
                 if (timeRemaining > 0) {
-
                     if (timeRemaining >= getRecordDuration()) {
                         completeRecCount += 1;
                     } else {
@@ -549,31 +600,70 @@ public class RecordingSettings implements Serializable {
             truncatedRecCount = 0;
             truncatedRecTime = 0;
             totalRecLength = 0;
-            double maxLength = 0;
-            double length=0;
-            double prevLength=0;
 
             for (int i = 0; i < completeRecCount; i++) {
-              TimePeriods  period = getTimePeriods().get(i);
+                TimePeriods period = getTimePeriods().get(i);
                 length = period.getEndMins() - period.getStartMins();
-                /* If the periods differ in size, include 'up to' when describing the file size. If amplitude thresholding is enabled, it already will include this */
+                /* If the periods differ in size, include 'up to' when describing the file size.
+                If amplitude thresholding is enabled, it already will include this */
                 if (i > 0 && !this.isAmplitudeThresholdingEnabled()) {
-                  TimePeriods  prevPeriod = getTimePeriods().get(i - 1);
-                  prevLength = prevPeriod.getEndMins() - prevPeriod.getStartMins();
+                    TimePeriods prevPeriod = getTimePeriods().get(i - 1);
+                    prevLength = prevPeriod.getEndMins() - prevPeriod.getStartMins();
                     if (length != prevLength) {
-                      upTo = true;
+                        upTo = true;
                     }
                 }
                 totalRecLength += length;
                 maxLength = (length > maxLength) ? length : maxLength;
             }
             totalRecLength *= 60;
-
-          //  totalSize = this.getSampleRate() / configuration.sampleRateDivider * 2 * totalRecLength;
+            totalSize = this.getSampleRate() / getSampleRateDivider(getSampleRate()) * 2 * totalRecLength;
         }
 
-        ls = new LifeSpan(totalCompleteRecCount,truncatedRecCount,truncatedRecTime,totalRecLength,0);
+        totalRecCount = completeRecCount + truncatedRecCount;
+
+        if (completeRecCount > 1) {
+            if (dutyEnabled) {
+                upToSize = recSize;
+            } else {
+                maxFileSize = this.getSampleRate() / getSampleRateDivider(getSampleRate()) * 2 * maxLength * 60;
+                upToSize = maxFileSize;
+            }
+
+        }
+        recordingSize = (completeRecCount > 1) ? upToSize : totalSize;
+
+        /* Calculate amount of energy used both recording a sleeping over the course of a day */
+
+        energyUsed = Math.min(86400 - totalRecCount * START_UP_TIME, totalRecLength) * getRecordCurrent(getSampleRate()) / 3600;
+
+        energyUsed += totalRecCount * START_UP_TIME * getStartCurrent(getSampleRate()) / 3600;
+
+        energyUsed += Math.max(0, 86400 - totalRecCount * START_UP_TIME - totalRecLength) * SLEEP_ENERGY / 3600;
+
+        energyPrecision = energyUsed > 100 ? 10 : energyUsed > 50 ? 5 : energyUsed > 20 ? 2 : 1;
+
+        energyUsed = Math.round(energyUsed / energyPrecision) * energyPrecision;
+
+        ls = new LifeSpan(totalCompleteRecCount, truncatedRecCount, truncatedRecTime, totalRecLength, energyUsed);
         return ls;
     }
+
+
+    private float getStartCurrent(int rateIndex){
+        float startCurrent = Configurations.getConfig(rateIndex,false).getStartCurrent();
+        return startCurrent;
+    }
+
+    private float getRecordCurrent(int rateIndex){
+        float recordCurrent = Configurations.getConfig(rateIndex,false).getRecordCurrent();
+        return recordCurrent;
+    }
+    private byte getSampleRateDivider(int rateIndex) {
+        byte sampleRateDivider = Configurations.getConfig(rateIndex, false).getSampleRateDivider();
+        return sampleRateDivider;
+    }
+
+
 }
 

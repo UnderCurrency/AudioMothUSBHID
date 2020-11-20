@@ -23,9 +23,9 @@ public class LifeSpan {
     private double truncatedRecordingCount;
     private double truncatedRecordingTime;
     private double totalRecLength;
-    private float dailyEnergyConsumption;
+    private double dailyEnergyConsumption;
 
-    public LifeSpan(double totalCompleteRecordingCount, double truncatedRecordingCount, double truncatedRecordingTime, double totalRecLength, float dailyEnergyConsumption) {
+    public LifeSpan(double totalCompleteRecordingCount, double truncatedRecordingCount, double truncatedRecordingTime, double totalRecLength, double dailyEnergyConsumption) {
         this.totalCompleteRecordingCount = totalCompleteRecordingCount;
         this.truncatedRecordingCount = truncatedRecordingCount;
         this.truncatedRecordingTime = truncatedRecordingTime;
@@ -66,11 +66,23 @@ public class LifeSpan {
         this.totalRecLength = totalRecLength;
     }
 
-    public float getDailyEnergyConsumption() {
+    public double getDailyEnergyConsumption() {
         return dailyEnergyConsumption;
     }
 
-    public void setDailyEnergyConsumption(float dailyEnergyConsumption) {
+    public void setDailyEnergyConsumption(double dailyEnergyConsumption) {
         this.dailyEnergyConsumption = dailyEnergyConsumption;
+    }
+
+
+    @Override
+    public String toString() {
+        return "LifeSpan{" +
+                "totalCompleteRecordingCount=" + totalCompleteRecordingCount +
+                ", truncatedRecordingCount=" + truncatedRecordingCount +
+                ", truncatedRecordingTime=" + truncatedRecordingTime +
+                ", totalRecLength=" + totalRecLength +
+                ", dailyEnergyConsumption=" + dailyEnergyConsumption +
+                '}';
     }
 }
