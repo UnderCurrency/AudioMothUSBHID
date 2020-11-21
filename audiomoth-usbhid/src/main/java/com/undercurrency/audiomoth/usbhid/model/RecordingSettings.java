@@ -18,6 +18,8 @@
 
 package com.undercurrency.audiomoth.usbhid.model;
 
+import android.util.Log;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -40,7 +42,7 @@ import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeShortToL
  * RecordingSettings a POJO holding all the AudioMoth settings
  */
 public class RecordingSettings implements Serializable {
-
+    private static final String TAG="RecordingSettings";
     private static final long serialVersionUID = 8799656478674716638L;
 
     private static final int MAX_PERIODS = 5;
@@ -144,14 +146,17 @@ public class RecordingSettings implements Serializable {
         int hiFil = readShortFromLittleEndian(array, i);
         i += 2;
         if(lowFil!=UINT16_MAX && hiFil!=UINT16_MAX){
+            Log.d(TAG,"lowFil!=UINT16_MAX && hiFil!=UINT16_MAX");
             setFilterType(FilterType.BAND);
             setLowerFilter(lowFil*100);
             setHigherFilter(hiFil*100);
         } else if (lowFil == UINT16_MAX) {
+            Log.d(TAG,"lowFil==UINT16_MAX");
             setFilterType(FilterType.LOW);
             setHigherFilter(hiFil*100);
             setLowerFilter(0);
         } else if (hiFil == UINT16_MAX ) {
+            Log.d(TAG, "hiFil==UINT16_MAX");
             setFilterType(FilterType.HIGH);
             setHigherFilter(24000);
             setLowerFilter(lowFil*100);
@@ -189,7 +194,7 @@ public class RecordingSettings implements Serializable {
         if (!timePeriods.containsAll(that.timePeriods)) return false;
         if (filterType != that.filterType) return false;
         if(firstRecordingDate!=null) {
-            return firstRecordingDate.equals(that.lastRecordingDate);
+            return firstRecordingDate.equals(that.firstRecordingDate);
         }
         if(lastRecordingDate!=null) {
             return lastRecordingDate.equals(that.lastRecordingDate);
