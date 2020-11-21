@@ -62,7 +62,7 @@ import de.greenrobot.event.EventBusException;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.byteToHexString;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-
+    private String pathToJson = "test-case-02.config";
     private static final String TAG = "TestAudoMoth";
     protected EventBus eventBus;
     private Button btnDispositivo;
@@ -74,6 +74,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RecordingSettings rs;
     private DeviceInfo deviceInfo;
     private boolean deviceSelected = false;
+
+    private RecordingSettings rsIn;
+    private RecordingSettings rsOut;
 
     public static String getJsonFromAssets(Context ctx, String pathToJson) {
         InputStream rawInput;
@@ -174,9 +177,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         if (v == btnConfigurar) {
             if (deviceSelected) {
-                String ultrasonic = getJsonFromAssets(this, "Ultrasonico.json");
+                String ultrasonic = getJsonFromAssets(this, pathToJson);
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 rs = gson.fromJson(ultrasonic, RecordingSettings.class);
+                rsIn = gson.fromJson(ultrasonic,RecordingSettings.class);
                 rs.setDeviceInfo(deviceInfo);
                 //byte[] packet = rs.serializeToBytes();
                 eventBus.post(new AudioMothConfigEvent(rs));
@@ -238,10 +242,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onEvent(AudioMothConfigReceiveEvent event) {
         Log.d(TAG, "AudioMothConfigReceiveEvent");
         if (event.getRecordingSettings() != null) {
+            rsOut = event.getRecordingSettings();
             Gson gson = new Gson();
             String json = gson.toJson(event.getRecordingSettings());
             Log.d(TAG, json);
             tvJson.append(json);
+            if(rsIn.equals(rsOut)){
+                tvJson.append("************************\n");
+                tvJson.append("         Config OK\n");
+                tvJson.append("************************\n");
+            }
+
         }
     }
 

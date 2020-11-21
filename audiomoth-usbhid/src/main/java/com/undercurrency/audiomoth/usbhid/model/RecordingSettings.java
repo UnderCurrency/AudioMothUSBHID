@@ -288,25 +288,11 @@ public class RecordingSettings implements Serializable {
         /* Start/stop dates */
 
         long earliestRecordingTime = 0;
-        /* If the timezone difference has caused the day to differ from the day as a UTC time, undo the offset */
-        if (getFirstRecordingDate() != null && isLocalTime()) {
-            earliestRecordingTime = fixTimeZone(getFirstRecordingDate());
-        } else if (getFirstRecordingDate() != null) {
-            earliestRecordingTime = getFirstRecordingDate().getTime() / 1000L;
-        }
+        earliestRecordingTime = getFirstRecordingDate().getTime() / 1000L;
 
         long lastRecordingTime = 0;
         Date lastRecordingDateTimestamp = new Date();
-        if (getLastRecordingDate() != null && isLocalTime()) {
-            /* Make latestRecordingTime timestamp inclusive by setting it to the end of the chosen day */
-            lastRecordingTime = fixTimeZone(getLastRecordingDate()) + SECONDS_IN_DAY;
-        } else if (getLastRecordingDate() != null) {
             lastRecordingTime = getLastRecordingDate().getTime() / 1000L;
-        }
-
-        /* Check ranges of values before sending */
-        //    earliestRecordingTime = Math.min(UINT32_MAX, earliestRecordingTime);
-        //    lastRecordingTime = Math.min(UINT32_MAX, lastRecordingTime);
 
         writeLongToLittleEndian(serialization, index, earliestRecordingTime);
         index += 4;
