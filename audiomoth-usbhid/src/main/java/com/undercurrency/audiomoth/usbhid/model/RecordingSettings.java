@@ -188,8 +188,13 @@ public class RecordingSettings implements Serializable {
         if (amplitudeThreshold != that.amplitudeThreshold) return false;
         if (!timePeriods.containsAll(that.timePeriods)) return false;
         if (filterType != that.filterType) return false;
-        if (!firstRecordingDate.equals(that.firstRecordingDate)) return false;
-        return lastRecordingDate.equals(that.lastRecordingDate);
+        if(firstRecordingDate!=null) {
+            if (!firstRecordingDate.equals(that.firstRecordingDate)) return false;
+        }
+        if(lastRecordingDate!=null) {
+            return lastRecordingDate.equals(that.lastRecordingDate);
+        }
+        return true;
     }
 
     @Override
