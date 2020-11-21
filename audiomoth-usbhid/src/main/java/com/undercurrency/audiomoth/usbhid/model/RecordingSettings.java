@@ -189,7 +189,7 @@ public class RecordingSettings implements Serializable {
         if (!timePeriods.containsAll(that.timePeriods)) return false;
         if (filterType != that.filterType) return false;
         if(firstRecordingDate!=null) {
-            if (!firstRecordingDate.equals(that.firstRecordingDate)) return false;
+            return firstRecordingDate.equals(that.lastRecordingDate);
         }
         if(lastRecordingDate!=null) {
             return lastRecordingDate.equals(that.lastRecordingDate);
