@@ -139,17 +139,22 @@ public class RecordingSettings implements Serializable {
         Date endRecordingDate = readDateFromByteArray(array, i);
         setLastRecordingDate(endRecordingDate);
         i += 4;
-
-        setLowerFilter(readShortFromLittleEndian(array, i));
+        int lowFil = readShortFromLittleEndian(array, i);
         i += 2;
-        setHigherFilter(readShortFromLittleEndian(array, i));
+        int hiFil = readShortFromLittleEndian(array, i);
         i += 2;
-        if (getLowerFilter() == 0 && getHigherFilter() == 24000) {
+        if(lowFil!=UINT16_MAX && hiFil!=UINT16_MAX){
             setFilterType(FilterType.BAND);
-        } else if (getLowerFilter() == 0) {
+            setLowerFilter(lowFil*100);
+            setHigherFilter(hiFil*100);
+        } else if (lowFil == UINT16_MAX) {
             setFilterType(FilterType.LOW);
-        } else if (getHigherFilter() == 24000) {
+            setHigherFilter(hiFil*100);
+            setLowerFilter(0);
+        } else if (hiFil == UINT16_MAX ) {
             setFilterType(FilterType.HIGH);
+            setHigherFilter(24000);
+            setLowerFilter(lowFil*100);
         } else {
             setFilterType(FilterType.BAND);
         }
@@ -512,54 +517,80 @@ public class RecordingSettings implements Serializable {
         this.lastRecordingDate = lastRecordingDate;
     }
 
-    /**
-     * This metod calculates the daily battery consumption and diskspace used
-     *
-     * @return
-     */
-    public LifeSpan getLifeSpan() {
-        /* Energy consumed while device is awaiting an active period */
-        float SLEEP_ENERGY = 0.125f;
-        /* Time spent opening files and waiting for microphone to warm up before recording starts */
-int START_UP_TIME = 2;
-        LifeSpan ls = null;
-        double periodSecs = 0;
-        double completeRecCount = 0;
-        double totalCompleteRecCount = 0;
-        double truncatedRecTime = 0;
-        double truncatedRecCount = 0;
-        double totalRecLength = 0;
-        double timeRemaining = 0;
-        double totalSize = 0;
-        double totalRecCount = 0;
-        boolean upToFile = isAmplitudeThresholdingEnabled();
-        boolean upToTotal = isAmplitudeThresholdingEnabled();
-        boolean upTo = false;
-        int recLength = this.getRecordDuration();
-        int sleepSecs = this.getSleepDuration();
-        int recSize = 0;
-        double maxLength = 0;
-        double length = 0;
-        double prevLength = 0;
-        double upToSize=0;
-        double maxFileSize=0;
-        double recordingSize=0;
-        double energyUsed=0;
-        double energyPrecision=0;
 
-        for (int i = 0; i < timePeriods.size(); i += 1) {
+    private float getStartCurrent(int rateIndex) {
+        float startCurrent = Configurations.getConfig(rateIndex, false).getStartCurrent();
+        return startCurrent;
+    }
 
-            /* Calculate how many full recording periods fit in the allotted time */
+    private float getRecordCurrent(int rateIndex) {
+        float recordCurrent = Configurations.getConfig(rateIndex, false).getRecordCurrent();
+        return recordCurrent;
+    }
 
-            periodSecs = (timePeriods.get(i).getEndMins() - timePeriods.get(i).startMins) * 60;
-            completeRecCount = Math.floor(periodSecs / (recLength + sleepSecs));
+    private byte getSampleRateDivider(int rateIndex) {
+        byte sampleRateDivider = Configurations.getConfig(rateIndex, false).getSampleRateDivider();
+        return sampleRateDivider;
+    }
 
+
+    private LifeSpan getLifeSpan() {
+        //out variables
+        int energyUsed = 0;
+        String formatFileSize = "";
+        int totalRecCount = 0;
+        int completeRecCount = 0;
+        int upToFile = 0;
+        String upToFileSize = "MB";
+        int totalSize = 0;
+        int scheduleLength = 0;
+
+        //Auxiliaries
+        int truncatedRecCount =0;
+        int truncatedRecTime =0;
+        int totalRecLength = 0;
+        int recLength = 0;
+        int recSize=0;
+        int truncatedRecordingSize=0;
+
+        if (timePeriods.size() > 0) {
+            int[] countResponse = getDailyCount();
+            completeRecCount = countResponse[0];
+            truncatedRecCount = countResponse[1];
+            truncatedRecTime = countResponse[2];
+            totalRecLength = (completeRecCount * recLength) + truncatedRecTime;
+
+            recSize = getSampleRate() / getSampleRateDivider(getSampleRate()) * 2 * recLength;
+            truncatedRecordingSize = (truncatedRecTime *  getSampleRate() / getSampleRateDivider(getSampleRate()) * 2);
+            totalSize = (recSize * completeRecCount) + truncatedRecordingSize;
+
+        }
+
+
+        return new LifeSpan(energyUsed, formatFileSize, totalRecCount, completeRecCount, upToFile, upToFileSize, totalSize, timePeriods.size());
+    }
+
+    private int[] getDailyCount() {
+        int[] data = new int[3];
+        int periodSecs = 0;
+        int completeRecCount = 0;
+        int totalRecLength = 0;
+        int timeRemaining = 0;
+
+        /* Total number of recordings of the intended length */
+        int totalCompleteRecCount = 0;
+        /* Total number of recordings which could not be the intended length, so have been truncated */
+        int truncatedRecCount = 0;
+        /* Total length of all truncated files in seconds */
+        int truncatedRecTime = 0;
+        for (int i = 0; i < timePeriods.size(); i++) {
+            periodSecs = (timePeriods.get(i).getEndMins() - timePeriods.get(i).getStartMins()) * 60;
+            completeRecCount = (int) Math.floor(periodSecs / (getRecordDuration() + getSleepDuration()));
             /* Check if a truncated recording will fit in the rest of the period */
-            totalRecLength = completeRecCount * (recLength + sleepSecs);
+            totalRecLength = completeRecCount * (getRecordDuration() + getSleepDuration());
             timeRemaining = periodSecs - totalRecLength;
-
             if (timeRemaining > 0) {
-                if (timeRemaining >= recLength) {
+                if (timeRemaining >= getRecordDuration()) {
                     completeRecCount += 1;
                 } else {
                     truncatedRecTime += timeRemaining;
@@ -569,101 +600,11 @@ int START_UP_TIME = 2;
             totalCompleteRecCount += completeRecCount;
         }
 
-        completeRecCount= totalCompleteRecCount;
-
-
-
-
-        /* Calculate how many full recording periods fit in the allotted time */
-        if (this.isDutyEnabled()) {
-            recSize = this.getSampleRate() / getSampleRateDivider(getSampleRate()) * 2 * recLength;
-            for (TimePeriods t : getTimePeriods()) {
-                periodSecs = (t.getEndMins() - t.getStartMins()) * 60;
-                completeRecCount = Math.floor(periodSecs / (this.getRecordDuration() + this.getSleepDuration()));
-
-                totalRecLength = completeRecCount * (this.getRecordDuration() + this.getSleepDuration());
-                timeRemaining = timeRemaining = periodSecs - totalRecLength;
-                if (timeRemaining > 0) {
-                    if (timeRemaining >= getRecordDuration()) {
-                        completeRecCount += 1;
-                    } else {
-                        truncatedRecTime += timeRemaining;
-                        truncatedRecCount += 1;
-                    }
-                }
-                totalCompleteRecCount += completeRecCount;
-            }
-            totalRecLength = (completeRecCount * this.getRecordDuration()) + truncatedRecTime;
-
-        } else {
-            completeRecCount = getTimePeriods().size();
-            truncatedRecCount = 0;
-            truncatedRecTime = 0;
-            totalRecLength = 0;
-
-            for (int i = 0; i < completeRecCount; i++) {
-                TimePeriods period = getTimePeriods().get(i);
-                length = period.getEndMins() - period.getStartMins();
-                /* If the periods differ in size, include 'up to' when describing the file size.
-                If amplitude thresholding is enabled, it already will include this */
-                if (i > 0 && !this.isAmplitudeThresholdingEnabled()) {
-                    TimePeriods prevPeriod = getTimePeriods().get(i - 1);
-                    prevLength = prevPeriod.getEndMins() - prevPeriod.getStartMins();
-                    if (length != prevLength) {
-                        upTo = true;
-                    }
-                }
-                totalRecLength += length;
-                maxLength = (length > maxLength) ? length : maxLength;
-            }
-            totalRecLength *= 60;
-            totalSize = this.getSampleRate() / getSampleRateDivider(getSampleRate()) * 2 * totalRecLength;
-        }
-
-        totalRecCount = completeRecCount + truncatedRecCount;
-
-        if (completeRecCount > 1) {
-            if (dutyEnabled) {
-                upToSize = recSize;
-            } else {
-                maxFileSize = this.getSampleRate() / getSampleRateDivider(getSampleRate()) * 2 * maxLength * 60;
-                upToSize = maxFileSize;
-            }
-
-        }
-        recordingSize = (completeRecCount > 1) ? upToSize : totalSize;
-
-        /* Calculate amount of energy used both recording a sleeping over the course of a day */
-
-        energyUsed = Math.min(86400 - totalRecCount * START_UP_TIME, totalRecLength) * getRecordCurrent(getSampleRate()) / 3600;
-
-        energyUsed += totalRecCount * START_UP_TIME * getStartCurrent(getSampleRate()) / 3600;
-
-        energyUsed += Math.max(0, 86400 - totalRecCount * START_UP_TIME - totalRecLength) * SLEEP_ENERGY / 3600;
-
-        energyPrecision = energyUsed > 100 ? 10 : energyUsed > 50 ? 5 : energyUsed > 20 ? 2 : 1;
-
-        energyUsed = Math.round(energyUsed / energyPrecision) * energyPrecision;
-
-        ls = new LifeSpan(totalCompleteRecCount, truncatedRecCount, truncatedRecTime, totalRecLength, energyUsed);
-        return ls;
-    }
-
-
-    private float getStartCurrent(int rateIndex){
-        float startCurrent = Configurations.getConfig(rateIndex,false).getStartCurrent();
-        return startCurrent;
-    }
-
-    private float getRecordCurrent(int rateIndex){
-        float recordCurrent = Configurations.getConfig(rateIndex,false).getRecordCurrent();
-        return recordCurrent;
-    }
-    private byte getSampleRateDivider(int rateIndex) {
-        byte sampleRateDivider = Configurations.getConfig(rateIndex, false).getSampleRateDivider();
-        return sampleRateDivider;
-    }
-
-
+            data[0] = totalCompleteRecCount;
+            data[1] = truncatedRecCount;
+            data[2] = truncatedRecTime;
+            return data;
+     }
 }
+
 

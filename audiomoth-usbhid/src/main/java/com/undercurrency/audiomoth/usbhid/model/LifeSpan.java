@@ -19,70 +19,102 @@
 package com.undercurrency.audiomoth.usbhid.model;
 
 public class LifeSpan {
-    private double totalCompleteRecordingCount;
-    private double truncatedRecordingCount;
-    private double truncatedRecordingTime;
-    private double totalRecLength;
-    private double dailyEnergyConsumption;
+    int energyUsed=0;
+    String formatFileSize="";
+    int totalRecCount=0;
+    int completeRecCount=0;
+    int upToFile=0;
+    String upToFileSize="MB";
+    int totalSize=0;
+    int scheduleLength=0;
 
-    public LifeSpan(double totalCompleteRecordingCount, double truncatedRecordingCount, double truncatedRecordingTime, double totalRecLength, double dailyEnergyConsumption) {
-        this.totalCompleteRecordingCount = totalCompleteRecordingCount;
-        this.truncatedRecordingCount = truncatedRecordingCount;
-        this.truncatedRecordingTime = truncatedRecordingTime;
-        this.totalRecLength = totalRecLength;
-        this.dailyEnergyConsumption = dailyEnergyConsumption;
+
+    public LifeSpan(int energyUsed, String formatFileSize, int totalRecCount, int completeRecCount, int upToFile, String upToFileSize, int totalSize, int scheduleLength) {
+        this.energyUsed = energyUsed;
+        this.formatFileSize = formatFileSize;
+        this.totalRecCount = totalRecCount;
+        this.completeRecCount = completeRecCount;
+        this.upToFile = upToFile;
+        this.upToFileSize = upToFileSize;
+        this.totalSize = totalSize;
+        this.scheduleLength = scheduleLength;
     }
 
-
-    public double getTotalCompleteRecordingCount() {
-        return totalCompleteRecordingCount;
+    public int getEnergyUsed() {
+        return energyUsed;
     }
 
-    public void setTotalCompleteRecordingCount(double totalCompleteRecordingCount) {
-        this.totalCompleteRecordingCount = totalCompleteRecordingCount;
+    public void setEnergyUsed(int energyUsed) {
+        this.energyUsed = energyUsed;
     }
 
-    public double getTruncatedRecordingCount() {
-        return truncatedRecordingCount;
+    public String getFormatFileSize() {
+        return formatFileSize;
     }
 
-    public void setTruncatedRecordingCount(double truncatedRecordingCount) {
-        this.truncatedRecordingCount = truncatedRecordingCount;
+    public void setFormatFileSize(String formatFileSize) {
+        this.formatFileSize = formatFileSize;
     }
 
-    public double getTruncatedRecordingTime() {
-        return truncatedRecordingTime;
+    public int getTotalRecCount() {
+        return totalRecCount;
     }
 
-    public void setTruncatedRecordingTime(double truncatedRecordingTime) {
-        this.truncatedRecordingTime = truncatedRecordingTime;
+    public void setTotalRecCount(int totalRecCount) {
+        this.totalRecCount = totalRecCount;
     }
 
-    public double getTotalRecLength() {
-        return totalRecLength;
+    public int getCompleteRecCount() {
+        return completeRecCount;
     }
 
-    public void setTotalRecLength(double totalRecLength) {
-        this.totalRecLength = totalRecLength;
+    public void setCompleteRecCount(int completeRecCount) {
+        this.completeRecCount = completeRecCount;
     }
 
-    public double getDailyEnergyConsumption() {
-        return dailyEnergyConsumption;
+    public int getUpToFile() {
+        return upToFile;
     }
 
-    public void setDailyEnergyConsumption(double dailyEnergyConsumption) {
-        this.dailyEnergyConsumption = dailyEnergyConsumption;
+    public void setUpToFile(int upToFile) {
+        this.upToFile = upToFile;
     }
 
+    public String getUpToFileSize() {
+        return upToFileSize;
+    }
+
+    public void setUpToFileSize(String upToFileSize) {
+        this.upToFileSize = upToFileSize;
+    }
+
+    public int getTotalSize() {
+        return totalSize;
+    }
+
+    public void setTotalSize(int totalSize) {
+        this.totalSize = totalSize;
+    }
+
+    public int getScheduleLength() {
+        return scheduleLength;
+    }
+
+    public void setScheduleLength(int scheduleLength) {
+        this.scheduleLength = scheduleLength;
+    }
 
     @Override
     public String toString() {
         return "LifeSpan{" +
-                "totalCompleteRecordingCount=" + totalCompleteRecordingCount +
-                ", truncatedRecordingCount=" + truncatedRecordingCount +
-                ", truncatedRecordingTime=" + truncatedRecordingTime +
-                ", totalRecLength=" + totalRecLength +
-                ", dailyEnergyConsumption=" + dailyEnergyConsumption +
+                "energyUsed=" + energyUsed +
+                ", formatFileSize='" + formatFileSize + '\'' +
+                ", totalRecCount=" + totalRecCount +
+                ", completeRecCount=" + completeRecCount +
+                ", upToFile=" + upToFile +
+                ", upToFileSize='" + upToFileSize + '\'' +
+                ", totalSize=" + totalSize +
+                ", scheduleLength=" + scheduleLength +
                 '}';
     }
 }

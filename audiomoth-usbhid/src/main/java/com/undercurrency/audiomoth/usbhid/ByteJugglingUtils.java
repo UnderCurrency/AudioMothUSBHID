@@ -134,9 +134,13 @@ public  class ByteJugglingUtils {
     public static Date readDateFromByteArray(byte[] buffer, int start){
         byte[] fakeLongArray = Arrays.copyOfRange(buffer,start,start+4);
         byte[] longArray = new byte[8];
+        byte xorData=0;
         for(int i=0; i<4;i++){
             longArray[i]=fakeLongArray[i];
+            xorData= (byte) (longArray[i] ^ 0);
         }
+        if (xorData==0) return null;
+
         for(int i=4; i<8;i++){
             longArray[i]=0;
         }
