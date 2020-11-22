@@ -18,6 +18,9 @@
 
 package com.undercurrency.audiomoth.usbhid.model;
 
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
+
 public class LifeSpan {
 
     long totalRecCount=0;
@@ -25,14 +28,16 @@ public class LifeSpan {
     boolean upTo=false;
     String fileSizeInUnits ="0 MB";
     float energyUsed=0.0F;
+    long fileSizeBytes = 0L;
 
     public LifeSpan(){}
 
-    public LifeSpan(long totalRecCount, boolean plural, boolean upTo, String fileSizeInUnits, float energyUsed) {
+    public LifeSpan(long totalRecCount, boolean plural, boolean upTo, String fileSizeInUnits, long fileSizeBytes, float energyUsed) {
         this.totalRecCount = totalRecCount;
         this.plural = plural;
         this.upTo = upTo;
         this.fileSizeInUnits = fileSizeInUnits;
+        this.fileSizeBytes = fileSizeBytes;
         this.energyUsed = energyUsed;
     }
 
@@ -78,6 +83,10 @@ public class LifeSpan {
         return energyUsed;
     }
 
+    public long getFileSizeBytes() {
+        return fileSizeBytes;
+    }
+
     private static byte getSampleRateDivider(int rateIndex) {
         return Configurations.getConfig(rateIndex/1000, false).getSampleRateDivider();
     }
@@ -85,6 +94,8 @@ public class LifeSpan {
     private static int getSampleRateConfig(int rateIndex){
         return Configurations.getConfig(rateIndex/1000,false).getSampleRate();
     }
+
+
 
     public static LifeSpan getLifeSpan(RecordingSettings rs) {
         long MAX_WAV_LENGTH =4294966806L;
@@ -179,7 +190,10 @@ public class LifeSpan {
             energyPrecision = energyUsed > 100 ? 10 : energyUsed > 50 ? 5 : energyUsed > 20 ? 2 : 1;
             energyUsed = Math.round((float)energyUsed/(float)energyPrecision)*energyPrecision;
 
-            return new LifeSpan(totalRecCount,totalRecCount>1,completeRecCount>1?upToFile:upToTotal,completeRecCount>1?formatFileSize(upToSize):formatFileSize(totalSize),energyUsed);
+            return new LifeSpan(totalRecCount,totalRecCount>1,
+                    rs.isAmplitudeThresholdingEnabled(),
+                    completeRecCount>1?formatFileSize(upToSize):formatFileSize(totalSize),
+                    completeRecCount>1?upToSize:totalSize,energyUsed);
 
         }
 
@@ -194,18 +208,22 @@ public class LifeSpan {
 
     }
 
-
-    private static String formatFileSize(long fileSize){
-        int calcFileSize= Math.round(fileSize / 1000f);
-        if (calcFileSize < 10000) {
-            return calcFileSize + " kB";
+    /**
+     * Format a byte filesize to a human readable format
+     * @see <a href="https://stackoverflow.com/questions/3758606/how-can-i-convert-byte-size-into-a-human-readable-format-in-java/3758880#3758880">https://stackoverflow.com/questions/3758606/how-can-i-convert-byte-size-into-a-human-readable-format-in-java/3758880#3758880</a>
+     * @param bytes
+     * @return
+     */
+    private static String formatFileSize(long bytes){
+        if (-1000 < bytes && bytes < 1000) {
+            return bytes + " B";
         }
-        calcFileSize = Math.round(calcFileSize / 1000f);
-        if (calcFileSize < 10000) {
-            return calcFileSize + " MB";
+        CharacterIterator ci = new StringCharacterIterator("kMGTPE");
+        while (bytes <= -999_950 || bytes >= 999_950) {
+            bytes /= 1000;
+            ci.next();
         }
-        calcFileSize = Math.round(calcFileSize / 1000f);
-        return fileSize + "GB";
+        return String.format("%.1f %cB", bytes / 1000.0, ci.current());
     }
 
     private static long[] getDailyCount(RecordingSettings rs) {
