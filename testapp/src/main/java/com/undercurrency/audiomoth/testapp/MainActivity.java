@@ -48,6 +48,7 @@ import com.undercurrency.audiomoth.usbhid.events.SelectDeviceEvent;
 import com.undercurrency.audiomoth.usbhid.events.ShowDevicesListEvent;
 import com.undercurrency.audiomoth.usbhid.events.USBDataReceiveEvent;
 import com.undercurrency.audiomoth.usbhid.model.DeviceInfo;
+import com.undercurrency.audiomoth.usbhid.model.LifeSpan;
 import com.undercurrency.audiomoth.usbhid.model.RecordingSettings;
 
 import java.io.ByteArrayOutputStream;
@@ -62,7 +63,8 @@ import de.greenrobot.event.EventBusException;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.byteToHexString;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    private String pathToJson = "test-case-02.config";
+    private String pathToJson = "energy-space-test-02.json";
+    private static final String energy="Each day this will produce %d file%s totalling %s %s.<br />\nDaily energy consumption will be approximately %.2f mAh.";
     private static final String TAG = "TestAudoMoth";
     protected EventBus eventBus;
     private Button btnDispositivo;
@@ -192,9 +194,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (v == btnFecha) {
             eventBus.post(new AudioMothSetDateEvent(new Date()));
         } else if (v == btnSerialize) {
-            String ultrasonic = getJsonFromAssets(this, "Ultrasonico.json");
+            String jsonString = getJsonFromAssets(this, pathToJson);
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            RecordingSettings rsTest = gson.fromJson(ultrasonic, RecordingSettings.class);
+            RecordingSettings rsTest = gson.fromJson(jsonString, RecordingSettings.class);
             rsTest.setDeviceInfo(new DeviceInfo("CAFEBABE", "1.4.4", "4.5", new Date()));
             byte[] arr = rsTest.serializeToBytes();
             Log.d(TAG,"Original JSON-ByteArray");
@@ -207,6 +209,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.d("json rsDeserialize", json);
             Log.v(TAG, byteToHexString(arr));
             Log.v(TAG, "Equals = " + (rsDeserialize.equals(rsTest)?"YES":"NO"));
+            LifeSpan ls = LifeSpan.getLifeSpan(rsTest);
+            Log.d(TAG, ls.toString());
 
         }
     }

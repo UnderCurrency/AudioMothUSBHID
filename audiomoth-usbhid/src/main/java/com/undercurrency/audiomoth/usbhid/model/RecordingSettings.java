@@ -44,7 +44,6 @@ import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeShortToL
 public class RecordingSettings implements Serializable {
     private static final String TAG="RecordingSettings";
     private static final long serialVersionUID = 8799656478674716638L;
-
     private static final int MAX_PERIODS = 5;
     private static final int SECONDS_IN_DAY = 86400;
     private static final int UINT16_MAX = 0xFFFF;

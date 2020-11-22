@@ -38,12 +38,12 @@ public class LifeSpan {
 
 
     private static float getStartCurrent(int rateIndex) {
-        float startCurrent = Configurations.getConfig(rateIndex, false).getStartCurrent();
+        float startCurrent = Configurations.getConfig(rateIndex/1000, false).getStartCurrent();
         return startCurrent;
     }
 
     private static float getRecordCurrent(int rateIndex) {
-        float recordCurrent = Configurations.getConfig(rateIndex, false).getRecordCurrent();
+        float recordCurrent = Configurations.getConfig(rateIndex/1000, false).getRecordCurrent();
         return recordCurrent;
     }
 
@@ -79,8 +79,11 @@ public class LifeSpan {
     }
 
     private static byte getSampleRateDivider(int rateIndex) {
-        byte sampleRateDivider = Configurations.getConfig(rateIndex, false).getSampleRateDivider();
-        return sampleRateDivider;
+        return Configurations.getConfig(rateIndex/1000, false).getSampleRateDivider();
+    }
+
+    private static int getSampleRateConfig(int rateIndex){
+        return Configurations.getConfig(rateIndex/1000,false).getSampleRate();
     }
 
     public static LifeSpan getLifeSpan(RecordingSettings rs) {
@@ -115,12 +118,7 @@ public class LifeSpan {
         upToFile = rs.isAmplitudeThresholdingEnabled();
         upToTotal = rs.isAmplitudeThresholdingEnabled();
 
-        /* Calculate amount of energy used both recording a sleeping over the course of a day */
-        energyUsed = Math.min(86400 - totalRecCount*START_UP_TIME,totalRecLength)* getRecordCurrent(rs.getSampleRate())/3600;
-        energyUsed += totalRecCount*START_UP_TIME*getRecordCurrent(rs.getSampleRate())/3600;
-        energyUsed += Math.max(0,86400-totalRecCount*START_UP_TIME-totalRecLength)*SLEEP_ENERGY/3600;
-        energyPrecision = energyUsed > 100 ? 10 : energyUsed > 50 ? 5 : energyUsed > 20 ? 2 : 1;
-        energyUsed = Math.round(energyUsed/energyPrecision)*energyPrecision;
+
 
         if (rs.getTimePeriods().size() > 0) {
             if(rs.isDutyEnabled()){
@@ -128,11 +126,11 @@ public class LifeSpan {
                 completeRecCount = countResponse[0];
                 truncatedRecCount = countResponse[1];
                 truncatedRecTime = countResponse[2];
-                totalRecLength = (completeRecCount * recLength) + truncatedRecTime;
+                totalRecLength = (completeRecCount * rs.getRecordDuration()) + truncatedRecTime;
 
                 /* Calculate the size of a days worth of recordings */
-                recSize = rs.getSampleRate() / getSampleRateDivider(rs.getSampleRate()) * 2 * recLength;
-                truncatedRecordingSize = (truncatedRecTime *  rs.getSampleRate() / getSampleRateDivider(rs.getSampleRate()) * 2);
+                recSize = (long) (((float)getSampleRateConfig(rs.getSampleRate()) / (float)getSampleRateDivider(rs.getSampleRate())) * 2 * rs.getRecordDuration());
+                truncatedRecordingSize = (long) ((float)truncatedRecTime * (float)getSampleRateConfig(rs.getSampleRate()) / getSampleRateDivider(rs.getSampleRate()) * 2);
                 totalSize = (recSize * completeRecCount) + truncatedRecordingSize;
             } else{
                 completeRecCount = rs.getTimePeriods().size();
@@ -155,7 +153,7 @@ public class LifeSpan {
                     maxLength = (length> maxLength)?length:maxLength;
                 }
                 totalRecLength *= 60;
-                totalSize = rs.getSampleRate()/getSampleRateDivider(rs.getSampleRate())*2*totalRecLength;
+                totalSize = (long) ((float)getSampleRateConfig(rs.getSampleRate())/(float)getSampleRateDivider(rs.getSampleRate())*2*totalRecLength);
 
             }
             totalRecCount = completeRecCount + truncatedRecCount;
@@ -164,7 +162,7 @@ public class LifeSpan {
                 if(rs.isDutyEnabled()){
                     upToSize = recSize;
                 } else {
-                    maxFileSize = rs.getSampleRate()/ getSampleRateDivider(rs.getSampleRate())*2*maxLength*60;
+                    maxFileSize = (long) ((float)getSampleRateConfig(rs.getSampleRate())/ (float)getSampleRateDivider(rs.getSampleRate())*2*maxLength*60);
                     upToSize= maxFileSize;
                 }
             }
@@ -174,9 +172,23 @@ public class LifeSpan {
                 sizeWarn = true;
             }
 
+            /* Calculate amount of energy used both recording a sleeping over the course of a day */
+            energyUsed = Math.min(86400 - totalRecCount*START_UP_TIME,totalRecLength)* getRecordCurrent(rs.getSampleRate())/3600f;
+            energyUsed += totalRecCount*START_UP_TIME*getRecordCurrent(rs.getSampleRate())/3600f;
+            energyUsed += Math.max(0,86400-totalRecCount*START_UP_TIME-totalRecLength)*SLEEP_ENERGY/3600f;
+            energyPrecision = energyUsed > 100 ? 10 : energyUsed > 50 ? 5 : energyUsed > 20 ? 2 : 1;
+            energyUsed = Math.round((float)energyUsed/(float)energyPrecision)*energyPrecision;
+
             return new LifeSpan(totalRecCount,totalRecCount>1,completeRecCount>1?upToFile:upToTotal,completeRecCount>1?formatFileSize(upToSize):formatFileSize(totalSize),energyUsed);
 
         }
+
+        /* Calculate amount of energy used both recording a sleeping over the course of a day */
+        energyUsed = Math.min(86400 - totalRecCount*START_UP_TIME,totalRecLength)* getRecordCurrent(rs.getSampleRate())/3600f;
+        energyUsed += totalRecCount*START_UP_TIME*getRecordCurrent(rs.getSampleRate())/3600f;
+        energyUsed += Math.max(0,86400-totalRecCount*START_UP_TIME-totalRecLength)*SLEEP_ENERGY/3600f;
+        energyPrecision = energyUsed > 100 ? 10 : energyUsed > 50 ? 5 : energyUsed > 20 ? 2 : 1;
+        energyUsed = Math.round((float)energyUsed/(float)energyPrecision)*energyPrecision;
 
         return new LifeSpan();
 
@@ -184,15 +196,15 @@ public class LifeSpan {
 
 
     private static String formatFileSize(long fileSize){
-        int calcFileSize= Math.round(fileSize / 1000);
+        int calcFileSize= Math.round(fileSize / 1000f);
         if (calcFileSize < 10000) {
             return calcFileSize + " kB";
         }
-        calcFileSize = Math.round(calcFileSize / 1000);
+        calcFileSize = Math.round(calcFileSize / 1000f);
         if (calcFileSize < 10000) {
             return calcFileSize + " MB";
         }
-        calcFileSize = Math.round(calcFileSize / 1000);
+        calcFileSize = Math.round(calcFileSize / 1000f);
         return fileSize + "GB";
     }
 
@@ -210,8 +222,9 @@ public class LifeSpan {
         /* Total length of all truncated files in seconds */
         long truncatedRecTime = 0;
         for (int i = 0; i < rs.getTimePeriods().size(); i++) {
+            /* Calculate how many full recording periods fit in the allotted time */
             periodSecs = (rs.getTimePeriods().get(i).getEndMins() - rs.getTimePeriods().get(i).getStartMins()) * 60;
-            completeRecCount = (int) Math.floor(periodSecs / (rs.getRecordDuration() + rs.getSleepDuration()));
+            completeRecCount = (int) Math.floor((float)periodSecs / (float)(rs.getRecordDuration() + rs.getSleepDuration()));
             /* Check if a truncated recording will fit in the rest of the period */
             totalRecLength = completeRecCount * (rs.getRecordDuration() + rs.getSleepDuration());
             timeRemaining = periodSecs - totalRecLength;
@@ -228,7 +241,7 @@ public class LifeSpan {
 
         data[0] = totalCompleteRecCount;
         data[1] = truncatedRecCount;
-        data[2] = truncatedRecTime;
+            data[2] = truncatedRecTime;
         return data;
     }
 

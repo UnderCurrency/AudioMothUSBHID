@@ -21,17 +21,17 @@ package com.undercurrency.audiomoth.usbhid.model;
  * The Configurations enum represents all the AudioMoth sampling recording configurations.
  */
 public enum Configurations {
-    SAMPLE_RATE_8(8,4,16,1,8000,48,11.0f,10.0f),
-    SAMPLE_RATE_16(16,4,16,1,16000,24,11.2f, 10.9f),
-    SAMPLE_RATE_32(32,4,16,1,32000, 12,11.5f,12.3f),
-    SAMPLE_RATE_48(48,4,16,1,48000,8,11.8f,14.0f),
-    SAMPLE_RATE_96(96,4,16,1,96000,4,12.7f,17.4f),
-    SAMPLE_RATE_192(192,4,16,1,192000,2,14.5f, 25.6f),
+    SAMPLE_RATE_8(8,4,16,1,384000,48,11.0f,10.0f),
+    SAMPLE_RATE_16(16,4,16,1,384000,24,11.2f, 10.9f),
+    SAMPLE_RATE_32(32,4,16,1,384000, 12,11.5f,12.3f),
+    SAMPLE_RATE_48(48,4,16,1,384000,8,11.8f,14.0f),
+    SAMPLE_RATE_96(96,4,16,1,384000,4,12.7f,17.4f),
+    SAMPLE_RATE_192(192,4,16,1,384000,2,14.5f, 25.6f),
     SAMPLE_RATE_250(250,4,16,1,250000,1,15.8f,29.5f),
     SAMPLE_RATE_384(384,4,16,1,384000,1,18.2f,41.6f),
-    OLD_SAMPLE_RATE_8(8,4,16,1,8000,16,11.0f,10.0f),
-    OLD_SAMPLE_RATE_16(16,4,16,1,16000,8,11.2f,10.9f),
-    OLD_SAMPLE_RATE_32(32,4,16,1,32000,4,11.5f,12.3f)
+    OLD_SAMPLE_RATE_8(8,4,16,1,128000,16,11.0f,10.0f),
+    OLD_SAMPLE_RATE_16(16,4,16,1,128000,8,11.2f,10.9f),
+    OLD_SAMPLE_RATE_32(32,4,16,1,128000,4,11.5f,12.3f)
     ;
     private final byte trueSampleRate;
     private final byte clockDivider;
