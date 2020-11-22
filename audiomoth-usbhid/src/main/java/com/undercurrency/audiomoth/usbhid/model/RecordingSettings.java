@@ -145,11 +145,12 @@ public class RecordingSettings implements Serializable {
         i += 2;
         int hiFil = readShortFromLittleEndian(array, i);
         i += 2;
-        if(lowFil!=UINT16_MAX && hiFil!=UINT16_MAX){
-            Log.d(TAG,"lowFil!=UINT16_MAX && hiFil!=UINT16_MAX");
+
+        if(lowFil==UINT16_MAX && higherFilter== UINT16_MAX){
+            Log.d(TAG,"lowFil==UINT16_MAX && highFil=UINT16_MAX" );
             setFilterType(FilterType.BAND);
-            setLowerFilter(lowFil*100);
-            setHigherFilter(hiFil*100);
+            setLowerFilter(0);
+            setHigherFilter(24000);
         } else if (lowFil == UINT16_MAX) {
             Log.d(TAG,"lowFil==UINT16_MAX");
             setFilterType(FilterType.LOW);
@@ -162,6 +163,8 @@ public class RecordingSettings implements Serializable {
             setLowerFilter(lowFil*100);
         } else {
             setFilterType(FilterType.BAND);
+            setLowerFilter(lowFil*100);
+            setHigherFilter(hiFil*100);
         }
 
 
@@ -193,12 +196,8 @@ public class RecordingSettings implements Serializable {
         if (amplitudeThreshold != that.amplitudeThreshold) return false;
         if (!timePeriods.containsAll(that.timePeriods)) return false;
         if (filterType != that.filterType) return false;
-        if(firstRecordingDate!=null) {
-            return firstRecordingDate.equals(that.firstRecordingDate);
-        }
-        if(lastRecordingDate!=null) {
-            return lastRecordingDate.equals(that.lastRecordingDate);
-        }
+        if(firstRecordingDate!=null && !firstRecordingDate.equals(that.firstRecordingDate)) return false;
+        if(lastRecordingDate!=null && !lastRecordingDate.equals(that.lastRecordingDate)) return false;
         return true;
     }
 
@@ -291,19 +290,19 @@ public class RecordingSettings implements Serializable {
         serialization[index++] = (byte) (isDutyEnabled() ? 1 : 0);
 
         /* Start/stop dates */
-
-        long earliestRecordingTime = 0;
-        earliestRecordingTime = getFirstRecordingDate().getTime() / 1000L;
-
-        long lastRecordingTime = 0;
-        Date lastRecordingDateTimestamp = new Date();
+        if(getFirstRecordingDate()!=null) {
+            long earliestRecordingTime = 0;
+            earliestRecordingTime = getFirstRecordingDate().getTime() / 1000L;
+            writeLongToLittleEndian(serialization, index, earliestRecordingTime);
+            index += 4;
+        }
+        if(getLastRecordingDate()!=null) {
+            long lastRecordingTime = 0;
+            Date lastRecordingDateTimestamp = new Date();
             lastRecordingTime = getLastRecordingDate().getTime() / 1000L;
-
-        writeLongToLittleEndian(serialization, index, earliestRecordingTime);
-        index += 4;
-        writeLongToLittleEndian(serialization, index, lastRecordingTime);
-        index += 4;
-
+            writeLongToLittleEndian(serialization, index, lastRecordingTime);
+            index += 4;
+        }
         /* Filter settings */
         if (isPassFiltersEnabled()) {
             switch (getFilterType()) {
