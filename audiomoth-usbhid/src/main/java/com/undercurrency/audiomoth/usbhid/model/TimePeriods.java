@@ -71,4 +71,19 @@ public class TimePeriods implements Comparable<TimePeriods>, Serializable {
     public int compareTo(TimePeriods o) {
         return this.getStartMins() - o.getStartMins();
     }
+
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append(fromMinToHrs(getStartMins()));
+        sb.append(" - ");
+        sb.append(fromMinToHrs(getEndMins()));
+        return sb.toString();
+    }
+
+    private String fromMinToHrs(int aTimeInMin){
+        int hours = aTimeInMin / 60; //since both are ints, you get an int
+        int minutes = aTimeInMin % 60;
+        return String.format("%d:%02d", hours, minutes);
+    }
 }

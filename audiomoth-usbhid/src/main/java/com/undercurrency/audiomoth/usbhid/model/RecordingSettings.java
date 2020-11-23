@@ -144,23 +144,28 @@ public class RecordingSettings implements Serializable {
         i += 2;
         int hiFil = readShortFromLittleEndian(array, i);
         i += 2;
-
-        if(lowFil==UINT16_MAX && higherFilter== UINT16_MAX){
+        if(lowFil==0 && higherFilter==0){
+            setPassFiltersEnabled(false);
+        } else if(lowFil==UINT16_MAX && higherFilter== UINT16_MAX){
             Log.d(TAG,"lowFil==UINT16_MAX && highFil=UINT16_MAX" );
+            setPassFiltersEnabled(true);
             setFilterType(FilterType.BAND);
             setLowerFilter(0);
             setHigherFilter(24000);
         } else if (lowFil == UINT16_MAX) {
             Log.d(TAG,"lowFil==UINT16_MAX");
+            setPassFiltersEnabled(true);
             setFilterType(FilterType.LOW);
             setHigherFilter(hiFil*100);
             setLowerFilter(0);
         } else if (hiFil == UINT16_MAX ) {
             Log.d(TAG, "hiFil==UINT16_MAX");
+            setPassFiltersEnabled(true);
             setFilterType(FilterType.HIGH);
             setHigherFilter(24000);
             setLowerFilter(lowFil*100);
         } else {
+            setPassFiltersEnabled(true);
             setFilterType(FilterType.BAND);
             setLowerFilter(lowFil*100);
             setHigherFilter(hiFil*100);
@@ -189,10 +194,14 @@ public class RecordingSettings implements Serializable {
         if (localTime != that.localTime) return false;
         if (dutyEnabled != that.dutyEnabled) return false;
         if (passFiltersEnabled != that.passFiltersEnabled) return false;
-        if (lowerFilter != that.lowerFilter) return false;
-        if (higherFilter != that.higherFilter) return false;
+        if(passFiltersEnabled) {
+            if (lowerFilter != that.lowerFilter) return false;
+            if (higherFilter != that.higherFilter) return false;
+        }
         if (amplitudeThresholdingEnabled != that.amplitudeThresholdingEnabled) return false;
-        if (amplitudeThreshold != that.amplitudeThreshold) return false;
+        if(amplitudeThresholdingEnabled) {
+            if (amplitudeThreshold != that.amplitudeThreshold) return false;
+        }
         if (!timePeriods.containsAll(that.timePeriods)) return false;
         if (filterType != that.filterType) return false;
         if(firstRecordingDate!=null && !firstRecordingDate.equals(that.firstRecordingDate)) return false;
