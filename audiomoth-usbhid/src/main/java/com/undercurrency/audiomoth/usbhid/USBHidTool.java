@@ -147,9 +147,6 @@ public class USBHidTool extends AbstractUSBHIDService {
             Log.d(TAG,"Unable to send");
         } else {
             Log.d(TAG,"Sended " + status + " bytes");
-            for (int i = 0; i < out.length/* && out[i] != 0*/; i++) {
-                Log.v(TAG,getString(R.string.SPACE) + ByteJugglingUtils.toInt(out[i]));
-            }
         }
     }
 

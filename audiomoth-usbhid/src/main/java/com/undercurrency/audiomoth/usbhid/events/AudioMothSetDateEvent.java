@@ -5,7 +5,7 @@ import android.provider.MediaStore;
 import java.util.Date;
 
 public class AudioMothSetDateEvent {
-    private static Date date;
+    private Date date;
 
     public AudioMothSetDateEvent(Date date){
         this.date = date;

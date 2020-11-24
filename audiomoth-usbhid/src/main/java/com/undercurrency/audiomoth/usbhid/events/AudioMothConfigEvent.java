@@ -3,7 +3,7 @@ package com.undercurrency.audiomoth.usbhid.events;
 import com.undercurrency.audiomoth.usbhid.model.RecordingSettings;
 
 public class AudioMothConfigEvent {
-    private static RecordingSettings rs;
+    private RecordingSettings rs;
 
     public RecordingSettings getRecordingSettings(){
         return this.rs;

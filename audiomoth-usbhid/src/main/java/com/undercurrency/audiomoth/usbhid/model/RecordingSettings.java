@@ -107,9 +107,10 @@ public class RecordingSettings implements Serializable {
         int acquisitionCycles = array[i++]; //7
         int oversampleRate = array[i++];//8
         int sampleRate = readIntFromLittleEndian(array, i);//9
-        setSampleRate(sampleRate);
         i += 4;
         int sampleRateDivider = array[i++];
+        int visibleSampleRate = sampleRate/sampleRateDivider;
+        setSampleRate(visibleSampleRate);
         setSleepDuration(readShortFromLittleEndian(array, i));
         i += 2;
         setRecordDuration(readShortFromLittleEndian(array, i));
@@ -197,13 +198,13 @@ public class RecordingSettings implements Serializable {
         if(passFiltersEnabled) {
             if (lowerFilter != that.lowerFilter) return false;
             if (higherFilter != that.higherFilter) return false;
+            if (filterType != that.filterType) return false;
         }
         if (amplitudeThresholdingEnabled != that.amplitudeThresholdingEnabled) return false;
         if(amplitudeThresholdingEnabled) {
             if (amplitudeThreshold != that.amplitudeThreshold) return false;
         }
         if (!timePeriods.containsAll(that.timePeriods)) return false;
-        if (filterType != that.filterType) return false;
         if(firstRecordingDate!=null && !firstRecordingDate.equals(that.firstRecordingDate)) return false;
         if(lastRecordingDate!=null && !lastRecordingDate.equals(that.lastRecordingDate)) return false;
         return true;

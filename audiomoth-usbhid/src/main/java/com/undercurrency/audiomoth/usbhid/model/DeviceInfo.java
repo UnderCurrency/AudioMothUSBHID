@@ -17,8 +17,11 @@
 
 package com.undercurrency.audiomoth.usbhid.model;
 
+import android.annotation.SuppressLint;
+
 import java.io.Serializable;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readDateFromByteArray;
@@ -34,7 +37,7 @@ public class DeviceInfo implements Serializable {
     private String deviceId;
     private String firmwareVersion;
     private String  battery;
-    private Date date;
+    private String date;
 
 
     /**
@@ -54,7 +57,8 @@ public class DeviceInfo implements Serializable {
         this.deviceId = deviceId;
         this.firmwareVersion = firmwareVersion;
         this.battery = battery;
-        this.date = date;
+        SimpleDateFormat sdf= new SimpleDateFormat("dd/MM/yyyy hh:mm:ss Z");
+        this.date = sdf.format(date);
     }
 
     /**
@@ -104,16 +108,19 @@ public class DeviceInfo implements Serializable {
         this.battery = battery;
     }
 
-    public Date getDate() {
+    public String getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(String date) {
         this.date = date;
     }
 
-    private Date readDate(byte[]  buffer, int offset){
-       return readDateFromByteArray(buffer,offset);
+    private String readDate(byte[]  buffer, int offset){
+       SimpleDateFormat sdf= new SimpleDateFormat("dd/MM/yyyy hh:mm:ss Z");
+        Date deviceDate = readDateFromByteArray(buffer,offset);
+        if(deviceDate == null) return null;
+        return sdf.format(deviceDate);
     }
 
     private String readDeviceId(byte[] buffer, int offset){
