@@ -132,9 +132,9 @@ public class RecordingSettings implements Serializable {
         }
         setLocalTime(array[i++] != 0);
         setLowVoltageCutoffEnabled(array[i++] != 0);
-        setBatteryLevelCheckEnabled(array[i++] != 0);
+        setBatteryLevelCheckEnabled(array[i++] == 0);
         i++;
-        setDutyEnabled(array[i++] != 0);
+        setDutyEnabled(array[i++] == 0);
         Date startRecordingDate = readDateFromByteArray(array, i);
         setFirstRecordingDate(startRecordingDate);
         i += 4;
@@ -291,12 +291,12 @@ public class RecordingSettings implements Serializable {
         }
         serialization[index++] = (byte) (isLocalTime() ? calculateTimezoneOffsetHours() : 0);
         serialization[index++] = (byte) (isLowVoltageCutoffEnabled() ? 1 : 0);
-        serialization[index++] = (byte) (isBatteryLevelCheckEnabled() ? 1 : 0);
+        serialization[index++] = (byte) (isBatteryLevelCheckEnabled() ? 0 : 1);
         /* For non-integer timezones */
         serialization[index++] = (byte) (isLocalTime() ? calculateTimezoneOffsetMins() : 0);
 
         /* Duty cycle disabled (default value = 0) */
-        serialization[index++] = (byte) (isDutyEnabled() ? 1 : 0);
+        serialization[index++] = (byte) (isDutyEnabled() ? 0 : 1);
 
         /* Start/stop dates */
         if(getFirstRecordingDate()!=null) {

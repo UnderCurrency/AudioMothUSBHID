@@ -131,7 +131,7 @@ public class LifeSpan {
 
 
 
-        if (rs.getTimePeriods().size() > 0) {
+        if (rs.getTimePeriods().size() != 0) {
             if(rs.isDutyEnabled()){
                 long[] countResponse = getDailyCount(rs);
                 completeRecCount = countResponse[0];
@@ -206,6 +206,11 @@ public class LifeSpan {
 
         return new LifeSpan();
 
+    }
+
+
+    public String getTotalMBFiles(){
+            return formatFileSize(getTotalRecCount()*getFileSizeBytes());
     }
 
     /**

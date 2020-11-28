@@ -117,7 +117,7 @@ public class DeviceInfo implements Serializable {
     }
 
     private String readDate(byte[]  buffer, int offset){
-       SimpleDateFormat sdf= new SimpleDateFormat("dd/MM/yyyy hh:mm:ss Z");
+       SimpleDateFormat sdf= new SimpleDateFormat("hh:mm:ss dd/MM/yyyy Z");
         Date deviceDate = readDateFromByteArray(buffer,offset);
         if(deviceDate == null) return null;
         return sdf.format(deviceDate);
