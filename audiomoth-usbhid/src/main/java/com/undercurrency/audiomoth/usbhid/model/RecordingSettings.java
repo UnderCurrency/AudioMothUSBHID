@@ -24,6 +24,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -33,6 +34,8 @@ import java.util.TimeZone;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readDateFromByteArray;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readIntFromLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readShortFromLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.toByte;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.toInt;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeIntToLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeLongToLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeShortToLittleEndian;
@@ -96,33 +99,33 @@ public class RecordingSettings implements Serializable {
     /**
      * Creates a new RecordingSettings from a byte array
      *
-     * @param array
+     * @param serialization
      */
-    public RecordingSettings(byte[] array) {
+    public RecordingSettings(byte[] serialization) {
         int i = 0;
-        int fecha = readIntFromLittleEndian(array, 0);
+        int fecha = readIntFromLittleEndian(serialization, 0);
         i += 4;
-        setGain(array[i++]); //5
-        int clockDivider = array[i++]; //6
-        int acquisitionCycles = array[i++]; //7
-        int oversampleRate = array[i++];//8
-        int sampleRate = readIntFromLittleEndian(array, i);//9
+        setGain(serialization[i++]); //5
+        int clockDivider = serialization[i++]; //6
+        int acquisitionCycles = serialization[i++]; //7
+        int oversampleRate = serialization[i++];//8
+        int sampleRate = readIntFromLittleEndian(serialization, i);//9
         i += 4;
-        int sampleRateDivider = array[i++];
+        int sampleRateDivider = serialization[i++];
         int visibleSampleRate = sampleRate/sampleRateDivider;
         setSampleRate(visibleSampleRate);
-        setSleepDuration(readShortFromLittleEndian(array, i));
+        setSleepDuration(readShortFromLittleEndian(serialization, i));
         i += 2;
-        setRecordDuration(readShortFromLittleEndian(array, i));
+        setRecordDuration(readShortFromLittleEndian(serialization, i));
         i += 2;
-        setLedEnabled(array[i++] != 0);
-        int timePeriodsLength = array[i++];
+        setLedEnabled(serialization[i++] != 0);
+        int timePeriodsLength = serialization[i++];
         ArrayList<TimePeriods> tp = new ArrayList<TimePeriods>(timePeriodsLength + 1);
 
         for (int j = 0; j < timePeriodsLength; j++) {
-            int intStartMins = readShortFromLittleEndian(array, i);
+            int intStartMins = readShortFromLittleEndian(serialization, i);
             i += 2;
-            int intEndMins = readShortFromLittleEndian(array, i);
+            int intEndMins = readShortFromLittleEndian(serialization, i);
             i += 2;
             tp.add(j, new TimePeriods(intStartMins, intEndMins));
         }
@@ -130,20 +133,20 @@ public class RecordingSettings implements Serializable {
         for (int k = 0; k < MAX_PERIODS - timePeriodsLength; k++) {
             i += 4;
         }
-        setLocalTime(array[i++] != 0);
-        setLowVoltageCutoffEnabled(array[i++] != 0);
-        setBatteryLevelCheckEnabled(array[i++] == 0);
+        setLocalTime(serialization[i++] != 0);
+        setLowVoltageCutoffEnabled(serialization[i++] != 0);
+        setBatteryLevelCheckEnabled(serialization[i++] == 0);
         i++;
-        setDutyEnabled(array[i++] == 0);
-        Date startRecordingDate = readDateFromByteArray(array, i);
+        setDutyEnabled(serialization[i++] == 0);
+        Date startRecordingDate = readDateFromByteArray(serialization, i);
         setFirstRecordingDate(startRecordingDate);
         i += 4;
-        Date endRecordingDate = readDateFromByteArray(array, i);
+        Date endRecordingDate = readDateFromByteArray(serialization, i);
         setLastRecordingDate(endRecordingDate);
         i += 4;
-        int lowFil = readShortFromLittleEndian(array, i);
+        int lowFil = readShortFromLittleEndian(serialization, i);
         i += 2;
-        int hiFil = readShortFromLittleEndian(array, i);
+        int hiFil = readShortFromLittleEndian(serialization, i);
         i += 2;
         if(lowFil==0 && higherFilter==0){
             setPassFiltersEnabled(false);
@@ -174,17 +177,118 @@ public class RecordingSettings implements Serializable {
 
 
         setPassFiltersEnabled(!(getLowerFilter() == 0 && getHigherFilter() == 0));
-        setAmplitudeThreshold(readShortFromLittleEndian(array, i));
+        setAmplitudeThreshold(readShortFromLittleEndian(serialization, i));
         setAmplitudeThresholdingEnabled(getAmplitudeThreshold() > 0);
+    }
+
+    /**
+     * Convert a RecordingSettings object to a byte array representation for AudioMoth
+     * AM uses this byte array to define the operation modes in runtime.
+     * In the firmware, when the device receives the config data via USB in a form of byte array, it
+     * copies to a C structure called configSettings_t, and returns it back to the USB connection
+     *
+     * @return a byte array
+     * @see <a href="https://github.com/OpenAcousticDevices/AudioMoth-Firmware-Basic/blob/1.4.4/main.c#L954></a>
+     * <p>
+     * Note: the javascript cousin of this code checks the presence in the ui of < 3 sample rate
+     * settings to determine the semantic version, we will ignore this, after comparing
+     * the firmware 1.4.4 to 1.3.0, the struct in the firmware differs from several fields.
+     * If it is lower to 1.4.4 it only have 3 posible configurations
+     * @see <a href="https://github.com/OpenAcousticDevices/AudioMoth-Configuration-App/blob/master/uiIndex.js#L217"></a>
+     * an also @see <a href="https://github.com/OpenAcousticDevices/AudioMoth-Configuration-App/blob/master/constants.js#L83"></a>
+     */
+    public byte[] serializeToBytes() {
+        Configurations config;
+        byte[] serialization = new byte[58];
+        int unixTime = (int) (System.currentTimeMillis() / 1000);
+        int index = 0;
+        writeIntToLittleEndian(serialization, index, unixTime);
+        index += 4;
+        serialization[index++] = getGain();
+        config = Configurations.getConfig(getSampleRate() / 1000, getDeviceInfo().isOlderSemanticVersion());
+        serialization[index++] = config.getClockDivider();
+        serialization[index++] = config.getAcquisitionCycles();
+        serialization[index++] = config.getOversampleRate();
+        writeIntToLittleEndian(serialization, index, config.getSampleRate());
+        index += 4;
+        serialization[index++] = config.getSampleRateDivider();
+        writeShortToLittleEndian(serialization, index, (short) getSleepDuration());
+        index += 2;
+        writeShortToLittleEndian(serialization, index, (short) getRecordDuration());
+        index += 2;
+        serialization[index++] = (byte) (isLedEnabled() ? 1 : 0);
+        Collections.sort(timePeriods);
+        serialization[index++] = (byte) timePeriods.size();
+        for (int i = 0; i < timePeriods.size(); i++) {
+            writeShortToLittleEndian(serialization, index, (short) timePeriods.get(i).getStartMins());
+            index += 2;
+            writeShortToLittleEndian(serialization, index, (short) timePeriods.get(i).getEndMins());
+            index += 2;
+        }
+        for (int i = 0; i < MAX_PERIODS - timePeriods.size(); i++) {
+            writeShortToLittleEndian(serialization, index, (short) 0);
+            index += 2;
+            writeShortToLittleEndian(serialization, index, (short) 0);
+            index += 2;
+        }
+        serialization[index++] = (byte) (isLocalTime() ? calculateTimezoneOffsetHours() : 0);
+        serialization[index++] = (byte) (isLowVoltageCutoffEnabled() ? 1 : 0);
+        serialization[index++] = (byte) (isBatteryLevelCheckEnabled() ? 0 : 1);
+        /* For non-integer timezones */
+        serialization[index++] = (byte) (isLocalTime() ? (calculateTimezoneOffsetMins() % 60) : 0);
+
+        /* Duty cycle disabled (default value = 0) */
+        serialization[index++] = (byte) (isDutyEnabled() ? 0 : 1);
+
+        /* Start/stop dates */
+        if(getFirstRecordingDate()!=null) {
+            long earliestRecordingTime = 0;
+            earliestRecordingTime = getFirstRecordingDate().getTime() / 1000L;
+            writeLongToLittleEndian(serialization, index, earliestRecordingTime);
+        }
+        index += 4;
+        if(getLastRecordingDate()!=null) {
+            long lastRecordingTime = 0;
+            Date lastRecordingDateTimestamp = new Date();
+            lastRecordingTime = getLastRecordingDate().getTime() / 1000L;
+            writeLongToLittleEndian(serialization, index, lastRecordingTime);
+        }
+        index += 4;
+        /* Filter settings */
+        int lowerFilter =0;
+        int higherFilter = 0;
+        if (isPassFiltersEnabled()) {
+            switch (getFilterType()) {
+                case LOW:
+                    lowerFilter=UINT16_MAX;
+                    higherFilter =(getHigherFilter() / 100);
+                    break;
+                case HIGH:
+                    lowerFilter=(getLowerFilter() / 100);
+                    higherFilter=(UINT16_MAX);
+                    break;
+                case BAND:
+                    lowerFilter=(getLowerFilter() / 100);
+                    higherFilter=(getHigherFilter() / 100);
+                    break;
+
+            }
+        }
+        writeShortToLittleEndian(serialization, index, (short) lowerFilter);
+        index += 2;
+        writeShortToLittleEndian(serialization, index, (short) higherFilter);
+        index += 2;
+        /* CMV settings */
+        writeShortToLittleEndian(serialization, index, isAmplitudeThresholdingEnabled() ? (short) getAmplitudeThreshold() : (short) 0);
+        index += 2;
+        return serialization;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         RecordingSettings that = (RecordingSettings) o;
-
         if (ledEnabled != that.ledEnabled) return false;
         if (lowVoltageCutoffEnabled != that.lowVoltageCutoffEnabled) return false;
         if (batteryLevelCheckEnabled != that.batteryLevelCheckEnabled) return false;
@@ -237,113 +341,6 @@ public class RecordingSettings implements Serializable {
         return result;
     }
 
-    /**
-     * Convert a RecordingSettings object to a byte array representation for AudioMoth
-     * AM uses this byte array to define the operation modes in runtime.
-     * In the firmware, when the device receives the config data via USB in a form of byte array, it
-     * copies to a C structure called configSettings_t, and returns it back to the USB connection
-     *
-     * @return a byte array
-     * @see <a href="https://github.com/OpenAcousticDevices/AudioMoth-Firmware-Basic/blob/1.4.4/main.c#L954></a>
-     * <p>
-     * Note: the javascript cousin of this code checks the presence in the ui of < 3 sample rate
-     * settings to determine the semantic version, we will ignore this, after comparing
-     * the firmware 1.4.4 to 1.3.0, the struct in the firmware differs from several fields.
-     * If it is lower to 1.4.4 it only have 3 posible configurations
-     * @see <a href="https://github.com/OpenAcousticDevices/AudioMoth-Configuration-App/blob/master/uiIndex.js#L217"></a>
-     * an also @see <a href="https://github.com/OpenAcousticDevices/AudioMoth-Configuration-App/blob/master/constants.js#L83"></a>
-     */
-    public byte[] serializeToBytes() {
-        Configurations config;
-        byte[] serialization = new byte[58];
-        int unixTime = (int) (System.currentTimeMillis() / 1000);
-        int index = 0;
-
-
-        writeIntToLittleEndian(serialization, index, unixTime);
-        index += 4;
-        serialization[index++] = getGain();
-        config = Configurations.getConfig(getSampleRate() / 1000, getDeviceInfo().isOlderSemanticVersion());
-        serialization[index++] = config.getClockDivider();
-        serialization[index++] = config.getAcquisitionCycles();
-        serialization[index++] = config.getOversampleRate();
-        writeIntToLittleEndian(serialization, index, config.getSampleRate());
-        index += 4;
-        serialization[index++] = config.getSampleRateDivider();
-        writeShortToLittleEndian(serialization, index, (short) getSleepDuration());
-        index += 2;
-        writeShortToLittleEndian(serialization, index, (short) getRecordDuration());
-        index += 2;
-        serialization[index++] = (byte) (isLedEnabled() ? 1 : 0);
-        Collections.sort(timePeriods);
-        serialization[index++] = (byte) timePeriods.size();
-        for (int i = 0; i < timePeriods.size(); i++) {
-            writeShortToLittleEndian(serialization, index, (short) timePeriods.get(i).getStartMins());
-            index += 2;
-            writeShortToLittleEndian(serialization, index, (short) timePeriods.get(i).getEndMins());
-            index += 2;
-        }
-        for (int i = 0; i < MAX_PERIODS - timePeriods.size(); i++) {
-            writeShortToLittleEndian(serialization, index, (short) 0);
-            index += 2;
-            writeShortToLittleEndian(serialization, index, (short) 0);
-            index += 2;
-        }
-        serialization[index++] = (byte) (isLocalTime() ? calculateTimezoneOffsetHours() : 0);
-        serialization[index++] = (byte) (isLowVoltageCutoffEnabled() ? 1 : 0);
-        serialization[index++] = (byte) (isBatteryLevelCheckEnabled() ? 0 : 1);
-        /* For non-integer timezones */
-        serialization[index++] = (byte) (isLocalTime() ? calculateTimezoneOffsetMins() : 0);
-
-        /* Duty cycle disabled (default value = 0) */
-        serialization[index++] = (byte) (isDutyEnabled() ? 0 : 1);
-
-        /* Start/stop dates */
-        if(getFirstRecordingDate()!=null) {
-            long earliestRecordingTime = 0;
-            earliestRecordingTime = getFirstRecordingDate().getTime() / 1000L;
-            writeLongToLittleEndian(serialization, index, earliestRecordingTime);
-            index += 4;
-        }
-        if(getLastRecordingDate()!=null) {
-            long lastRecordingTime = 0;
-            Date lastRecordingDateTimestamp = new Date();
-            lastRecordingTime = getLastRecordingDate().getTime() / 1000L;
-            writeLongToLittleEndian(serialization, index, lastRecordingTime);
-            index += 4;
-        }
-        /* Filter settings */
-        if (isPassFiltersEnabled()) {
-            switch (getFilterType()) {
-                case LOW:
-                    setLowerFilter(UINT16_MAX);
-                    setHigherFilter(getHigherFilter() / 100);
-                    break;
-                case HIGH:
-                    setLowerFilter(getLowerFilter() / 100);
-                    setHigherFilter(UINT16_MAX);
-                    break;
-                case BAND:
-                    setLowerFilter(getLowerFilter() / 100);
-                    setHigherFilter(getHigherFilter() / 100);
-                    break;
-
-            }
-        } else {
-            setLowerFilter(0);
-            setHigherFilter(0);
-        }
-        writeShortToLittleEndian(serialization, index, (short) getLowerFilter());
-        index += 2;
-        writeShortToLittleEndian(serialization, index, (short) getHigherFilter());
-        index += 2;
-        /* CMV settings */
-        writeShortToLittleEndian(serialization, index, isAmplitudeThresholdingEnabled() ? (short) getAmplitudeThreshold() : (short) 0);
-        index += 2;
-
-        return serialization;
-    }
-
     private int fixTimeZone(Date aDate) {
         DateTime today = new DateTime();
         int dayDiff = today.getDayOfMonth() - (new DateTime(DateTimeZone.UTC)).getDayOfMonth();
@@ -359,12 +356,17 @@ public class RecordingSettings implements Serializable {
     }
 
     private int calculateTimezoneOffsetMins() {
-        int tzOffset = TimeZone.getDefault().getOffset(new Date().getTime()) / 1000 / 60;
+        int tzOffset = 0;
+        if(getDeviceInfo()!=null && getDeviceInfo().getRealDate() != null){
+            TimeZone tzdata = TimeZone.getDefault();
+            int tzInt = tzdata.getOffset(Calendar.ZONE_OFFSET);
+            tzOffset = tzInt / 60000;
+        }
         return tzOffset;
     }
 
     private int calculateTimezoneOffsetHours() {
-        int tzOffset = TimeZone.getDefault().getOffset(new Date().getTime()) / 1000 / 60 / 60;
+        int tzOffset =  calculateTimezoneOffsetMins()/60;
         return tzOffset;
     }
 
@@ -520,7 +522,6 @@ public class RecordingSettings implements Serializable {
     public void setLastRecordingDate(Date lastRecordingDate) {
         this.lastRecordingDate = lastRecordingDate;
     }
-
 
 }
 

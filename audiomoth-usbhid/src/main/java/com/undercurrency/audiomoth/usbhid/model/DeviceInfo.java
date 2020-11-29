@@ -21,6 +21,7 @@ import android.annotation.SuppressLint;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -114,6 +115,17 @@ public class DeviceInfo implements Serializable {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public Date getRealDate(){
+        SimpleDateFormat sdf= new SimpleDateFormat("hh:mm:ss dd/MM/yyyy Z");
+        Date realDate = null;
+        try {
+            realDate = sdf.parse(getDate());
+        } catch (ParseException e) {
+          return null;
+        }
+        return realDate;
     }
 
     private String readDate(byte[]  buffer, int offset){
