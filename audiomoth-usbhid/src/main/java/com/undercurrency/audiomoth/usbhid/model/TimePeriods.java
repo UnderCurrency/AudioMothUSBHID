@@ -58,6 +58,14 @@ public class TimePeriods implements Comparable<TimePeriods>, Serializable {
         this.endMins = endMins;
     }
 
+    public boolean isLocalTime() {
+        return localTime;
+    }
+
+    public void setLocalTime(boolean localTime) {
+        this.localTime = localTime;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

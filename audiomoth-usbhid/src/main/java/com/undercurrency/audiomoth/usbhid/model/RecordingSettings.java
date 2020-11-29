@@ -153,6 +153,7 @@ public class RecordingSettings implements Serializable {
         } else {
          startRecordingDate = readDateFromByteArray(serialization, i);
         }
+        setFirstRecordingEnable(startRecordingDate!=null);
         setFirstRecordingDate(startRecordingDate);
         i += 4;
         Date endRecordingDate=null;
@@ -164,6 +165,7 @@ public class RecordingSettings implements Serializable {
         } else {
             endRecordingDate = readDateFromByteArray(serialization, i);
         }
+        setLastRecordingEnable(endRecordingDate!=null);
         setLastRecordingDate(endRecordingDate);
         i += 4;
         int lowFil = readShortFromLittleEndian(serialization, i);
@@ -274,20 +276,19 @@ public class RecordingSettings implements Serializable {
         int dayDiff = dtLocal.getDayOfMonth() - dtUTC.getDayOfMonth();*/
 
 
-        if(getFirstRecordingDate()!=null) {
+        if(isFirstRecordingEnable() && getFirstRecordingDate()!=null) {
             long earliestRecordingTime = 0;
             DateTime dtUTC = new LocalDateTime(getFirstRecordingDate().getTime()).toDateTime(DateTimeZone.UTC);
             earliestRecordingTime =dtUTC.getMillis() / 1000L;
             writeLongToLittleEndian(serialization, index, earliestRecordingTime);
         }
         index += 4;
-        if(getLastRecordingDate()!=null) {
+        if(isLastRecordingEnable() && getLastRecordingDate()!=null) {
             long lastRecordingTime = 0;
-
             DateTime dtUTC = new LocalDateTime(getLastRecordingDate().getTime()).toDateTime(DateTimeZone.UTC);
-            dtUTC = dtUTC.withTime(23,59,59,999);
             /* Make latestRecordingTime timestamp inclusive by setting it to the end of the chosen day */
-            lastRecordingTime = dtUTC.getMillis() / 1000L;
+            dtUTC = dtUTC.withTime(23,59,59,999);
+            lastRecordingTime = (dtUTC.getMillis()+1) / 1000L;
             writeLongToLittleEndian(serialization, index, lastRecordingTime);
         }
         index += 4;
