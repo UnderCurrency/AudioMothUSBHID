@@ -70,6 +70,8 @@ public class RecordingSettings implements Serializable {
     private int lowerFilter;
     private int higherFilter;
     private int amplitudeThreshold;
+    private transient boolean firstRecordingEnable;
+    private transient boolean lastRecordingEnable;
     private Date firstRecordingDate;
     private Date lastRecordingDate;
 
@@ -558,6 +560,21 @@ public class RecordingSettings implements Serializable {
         this.lastRecordingDate = lastRecordingDate;
     }
 
+    public boolean isFirstRecordingEnable() {
+        return firstRecordingEnable;
+    }
+
+    public void setFirstRecordingEnable(boolean firstRecordingEnable) {
+        this.firstRecordingEnable = firstRecordingEnable;
+    }
+
+    public boolean isLastRecordingEnable() {
+        return lastRecordingEnable;
+    }
+
+    public void setLastRecordingEnable(boolean lastRecordingEnable) {
+        this.lastRecordingEnable = lastRecordingEnable;
+    }
 }
 
 
