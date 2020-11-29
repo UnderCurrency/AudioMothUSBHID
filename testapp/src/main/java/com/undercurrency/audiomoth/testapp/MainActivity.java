@@ -63,7 +63,7 @@ import de.greenrobot.event.EventBusException;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.byteToHexString;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    private String pathToJson = "Advanced.json";
+    private String pathToJson = "ScheduleDate.json";
     private static final String energy="Each day this will produce %d file%s totalling %s %s.<br />\nDaily energy consumption will be approximately %.2f mAh.";
     private static final String TAG = "TestAudoMoth";
     protected EventBus eventBus;
@@ -236,9 +236,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.d(TAG, "AudioMothPacketReceiveEvent");
         if (event.getDeviceInfo() != null) {
             deviceInfo = event.getDeviceInfo();
-            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss zz");
-            Log.d(TAG, "Battery " + deviceInfo.getBattery() + ", serial " + deviceInfo.getDeviceId() + ", firmware " + deviceInfo.getFirmwareVersion() + " date " + sdf.format(deviceInfo.getDate()));
-            tvJson.append("Battery " + deviceInfo.getBattery() + ", serial " + deviceInfo.getDeviceId() + ", firmware " + deviceInfo.getFirmwareVersion() + " date " + sdf.format(deviceInfo.getDate()));
+            Log.d(TAG, "Battery " + deviceInfo.getBattery() + ", serial " + deviceInfo.getDeviceId() + ", firmware " + deviceInfo.getFirmwareVersion() + " date " +deviceInfo.getDate());
+            tvJson.append("Battery " + deviceInfo.getBattery() + ", serial " + deviceInfo.getDeviceId() + ", firmware " + deviceInfo.getFirmwareVersion() + " date " + deviceInfo.getDate());
 
         }
     }

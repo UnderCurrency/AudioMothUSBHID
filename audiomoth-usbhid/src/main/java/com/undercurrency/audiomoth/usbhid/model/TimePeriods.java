@@ -18,6 +18,8 @@
 package com.undercurrency.audiomoth.usbhid.model;
 
 import java.io.Serializable;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 /**
  * TimePeriods a class to represent time recording intervals for AM device
@@ -25,12 +27,19 @@ import java.io.Serializable;
 public class TimePeriods implements Comparable<TimePeriods>, Serializable {
 
     private static final long serialVersionUID = 8799656478674716611L;
-    int startMins;
-    int endMins;
+    private int startMins;
+    private int endMins;
+    private transient boolean localTime=false;
 
     public TimePeriods(int startMins, int endMins) {
         this.startMins = startMins;
         this.endMins = endMins;
+    }
+
+    public TimePeriods(int startMins, int endMins, boolean localTime) {
+        this.startMins = startMins;
+        this.endMins = endMins;
+        this.localTime = localTime;
     }
 
     public int getStartMins() {
@@ -78,9 +87,22 @@ public class TimePeriods implements Comparable<TimePeriods>, Serializable {
         sb.append(fromMinToHrs(getStartMins()));
         sb.append(" - ");
         sb.append(fromMinToHrs(getEndMins()));
+        if(localTime){
+            TimeZone tzdata = TimeZone.getDefault();
+            int tzInt = tzdata.getOffset(Calendar.ZONE_OFFSET);
+            int offset = tzInt / 3600000;
+           sb.append(String.format(" (UTC%d)",offset));
+        }
         return sb.toString();
     }
 
+    /**
+     * Returns a string representation of a Time Period
+     * if localTime is set, it adds the Timezone Offset
+     *
+     * @param aTimeInMin
+     * @return
+     */
     private String fromMinToHrs(int aTimeInMin){
         int hours = aTimeInMin / 60; //since both are ints, you get an int
         int minutes = aTimeInMin % 60;

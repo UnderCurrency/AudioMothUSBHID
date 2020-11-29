@@ -149,6 +149,23 @@ public  class ByteJugglingUtils {
         return date;
     }
 
+    public static Long readMillisFromByteArray(byte[] buffer, int start){
+        byte[] fakeLongArray = Arrays.copyOfRange(buffer,start,start+4);
+        byte[] longArray = new byte[8];
+        for(int i=0; i<4;i++){
+            longArray[i]=fakeLongArray[i];
+        }
+        for(int i=4; i<8;i++){
+            longArray[i]=0;
+        }
+        ByteBuffer bb = ByteBuffer.wrap(longArray);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        Date date = new Date();
+        long timestamp = bb.getLong();
+        if(timestamp==0) return  null;
+        return timestamp*1000L;
+    }
+
     /**
      * Converts a Date to a byte array
      * @param aDate a date

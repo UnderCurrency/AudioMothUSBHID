@@ -22,6 +22,9 @@ import android.util.Log;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.tz.UTCProvider;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
@@ -33,9 +36,8 @@ import java.util.TimeZone;
 
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readDateFromByteArray;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readIntFromLittleEndian;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readMillisFromByteArray;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readShortFromLittleEndian;
-import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.toByte;
-import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.toInt;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeIntToLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeLongToLittleEndian;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.writeShortToLittleEndian;
@@ -97,7 +99,7 @@ public class RecordingSettings implements Serializable {
     }
 
     /**
-     * Creates a new RecordingSettings from a byte array
+     * Deserializes a new RecordingSettings from a byte array
      *
      * @param serialization
      */
@@ -123,9 +125,10 @@ public class RecordingSettings implements Serializable {
         ArrayList<TimePeriods> tp = new ArrayList<TimePeriods>(timePeriodsLength + 1);
 
         for (int j = 0; j < timePeriodsLength; j++) {
-            int intStartMins = readShortFromLittleEndian(serialization, i);
+            int tzOffset = isLocalTime()?calculateTimezoneOffsetMins():0;
+            int intStartMins = readShortFromLittleEndian(serialization, i)+tzOffset;
             i += 2;
-            int intEndMins = readShortFromLittleEndian(serialization, i);
+            int intEndMins = readShortFromLittleEndian(serialization, i)+tzOffset;
             i += 2;
             tp.add(j, new TimePeriods(intStartMins, intEndMins));
         }
@@ -138,10 +141,22 @@ public class RecordingSettings implements Serializable {
         setBatteryLevelCheckEnabled(serialization[i++] == 0);
         i++;
         setDutyEnabled(serialization[i++] == 0);
-        Date startRecordingDate = readDateFromByteArray(serialization, i);
+        Date startRecordingDate=null;
+        if(isLocalTime()){
+            long lStartRecordingDate = readMillisFromByteArray(serialization,i);
+            startRecordingDate =  new DateTime(lStartRecordingDate, DateTimeZone.UTC).toLocalDate().toDate();
+        } else {
+         startRecordingDate = readDateFromByteArray(serialization, i);
+        }
         setFirstRecordingDate(startRecordingDate);
         i += 4;
-        Date endRecordingDate = readDateFromByteArray(serialization, i);
+        Date endRecordingDate=null;
+        if(isLocalTime()){
+            long lEndRecordingDate = readMillisFromByteArray(serialization,i);
+            endRecordingDate = new DateTime(lEndRecordingDate,DateTimeZone.UTC).toLocalDate().toDate();
+        } else {
+            endRecordingDate = readDateFromByteArray(serialization, i);
+        }
         setLastRecordingDate(endRecordingDate);
         i += 4;
         int lowFil = readShortFromLittleEndian(serialization, i);
@@ -220,9 +235,10 @@ public class RecordingSettings implements Serializable {
         Collections.sort(timePeriods);
         serialization[index++] = (byte) timePeriods.size();
         for (int i = 0; i < timePeriods.size(); i++) {
-            writeShortToLittleEndian(serialization, index, (short) timePeriods.get(i).getStartMins());
+            short minOffset = (short) (isLocalTime()?calculateTimezoneOffsetMins():0);
+            writeShortToLittleEndian(serialization, index, (short) ((short) timePeriods.get(i).getStartMins()-minOffset));
             index += 2;
-            writeShortToLittleEndian(serialization, index, (short) timePeriods.get(i).getEndMins());
+            writeShortToLittleEndian(serialization, index, (short) ((short) timePeriods.get(i).getEndMins()-minOffset));
             index += 2;
         }
         for (int i = 0; i < MAX_PERIODS - timePeriods.size(); i++) {
@@ -241,16 +257,30 @@ public class RecordingSettings implements Serializable {
         serialization[index++] = (byte) (isDutyEnabled() ? 0 : 1);
 
         /* Start/stop dates */
+       /* DateTimeZone tzLocal = DateTimeZone.getDefault();
+        DateTime dtUTC = new DateTime(DateTimeZone.UTC);
+        DateTime dtLocal = new DateTime();
+
+        long instant = dtLocal.getMillis();
+        long timezoneOffset = tzLocal.getOffset(instant)/60000;
+
+        int dayDiff = dtLocal.getDayOfMonth() - dtUTC.getDayOfMonth();*/
+
+
         if(getFirstRecordingDate()!=null) {
             long earliestRecordingTime = 0;
-            earliestRecordingTime = getFirstRecordingDate().getTime() / 1000L;
+            DateTime dtUTC = new LocalDateTime(getFirstRecordingDate().getTime()).toDateTime(DateTimeZone.UTC);
+            earliestRecordingTime =dtUTC.getMillis() / 1000L;
             writeLongToLittleEndian(serialization, index, earliestRecordingTime);
         }
         index += 4;
         if(getLastRecordingDate()!=null) {
             long lastRecordingTime = 0;
-            Date lastRecordingDateTimestamp = new Date();
-            lastRecordingTime = getLastRecordingDate().getTime() / 1000L;
+
+            DateTime dtUTC = new LocalDateTime(getLastRecordingDate().getTime()).toDateTime(DateTimeZone.UTC);
+            dtUTC = dtUTC.withTime(23,59,59,999);
+            /* Make latestRecordingTime timestamp inclusive by setting it to the end of the chosen day */
+            lastRecordingTime = dtUTC.getMillis() / 1000L;
             writeLongToLittleEndian(serialization, index, lastRecordingTime);
         }
         index += 4;
