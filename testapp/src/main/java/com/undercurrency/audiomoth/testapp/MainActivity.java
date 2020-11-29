@@ -63,7 +63,7 @@ import de.greenrobot.event.EventBusException;
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.byteToHexString;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    private String pathToJson = "ScheduleDate.json";
+    private String pathToJson = "Ultrasonico.json";
     private static final String energy="Each day this will produce %d file%s totalling %s %s.<br />\nDaily energy consumption will be approximately %.2f mAh.";
     private static final String TAG = "TestAudoMoth";
     protected EventBus eventBus;

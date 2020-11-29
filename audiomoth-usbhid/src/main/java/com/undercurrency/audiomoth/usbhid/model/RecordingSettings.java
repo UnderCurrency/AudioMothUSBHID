@@ -122,6 +122,7 @@ public class RecordingSettings implements Serializable {
         i += 2;
         setLedEnabled(serialization[i++] != 0);
         int timePeriodsLength = serialization[i++];
+        setLocalTime(serialization[39]!=0);
         ArrayList<TimePeriods> tp = new ArrayList<TimePeriods>(timePeriodsLength + 1);
 
         for (int j = 0; j < timePeriodsLength; j++) {
@@ -130,21 +131,23 @@ public class RecordingSettings implements Serializable {
             i += 2;
             int intEndMins = readShortFromLittleEndian(serialization, i)+tzOffset;
             i += 2;
-            tp.add(j, new TimePeriods(intStartMins, intEndMins));
+            tp.add(j, new TimePeriods(intStartMins, intEndMins, isLocalTime()));
         }
         setTimePeriods(tp);
         for (int k = 0; k < MAX_PERIODS - timePeriodsLength; k++) {
             i += 4;
         }
-        setLocalTime(serialization[i++] != 0);
+        i++;
         setLowVoltageCutoffEnabled(serialization[i++] != 0);
         setBatteryLevelCheckEnabled(serialization[i++] == 0);
         i++;
         setDutyEnabled(serialization[i++] == 0);
         Date startRecordingDate=null;
         if(isLocalTime()){
-            long lStartRecordingDate = readMillisFromByteArray(serialization,i);
-            startRecordingDate =  new DateTime(lStartRecordingDate, DateTimeZone.UTC).toLocalDate().toDate();
+            Long lStartRecordingDate = readMillisFromByteArray(serialization,i);
+            if(lStartRecordingDate!=null) {
+                startRecordingDate = new DateTime(lStartRecordingDate, DateTimeZone.UTC).toLocalDate().toDate();
+            }
         } else {
          startRecordingDate = readDateFromByteArray(serialization, i);
         }
@@ -152,8 +155,10 @@ public class RecordingSettings implements Serializable {
         i += 4;
         Date endRecordingDate=null;
         if(isLocalTime()){
-            long lEndRecordingDate = readMillisFromByteArray(serialization,i);
-            endRecordingDate = new DateTime(lEndRecordingDate,DateTimeZone.UTC).toLocalDate().toDate();
+            Long lEndRecordingDate = readMillisFromByteArray(serialization,i);
+            if(lEndRecordingDate!=null) {
+                endRecordingDate = new DateTime(lEndRecordingDate, DateTimeZone.UTC).toLocalDate().toDate();
+            }
         } else {
             endRecordingDate = readDateFromByteArray(serialization, i);
         }
@@ -387,11 +392,11 @@ public class RecordingSettings implements Serializable {
 
     private int calculateTimezoneOffsetMins() {
         int tzOffset = 0;
-        if(getDeviceInfo()!=null && getDeviceInfo().getRealDate() != null){
+
             TimeZone tzdata = TimeZone.getDefault();
             int tzInt = tzdata.getOffset(Calendar.ZONE_OFFSET);
             tzOffset = tzInt / 60000;
-        }
+
         return tzOffset;
     }
 
