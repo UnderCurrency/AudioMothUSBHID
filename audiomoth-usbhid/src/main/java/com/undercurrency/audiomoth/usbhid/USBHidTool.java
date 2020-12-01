@@ -59,6 +59,7 @@ public class USBHidTool extends AbstractUSBHIDService {
     private static final String TAG = "USBHidTool";
 
     private AudioMothOperations lastOp;
+    private Boolean localTime=false;
 
 
     @Override
@@ -163,7 +164,7 @@ public class USBHidTool extends AbstractUSBHIDService {
             case USB_MSG_TYPE_GET_APP_PACKET:
                 Log.d(TAG,"GET_APP_PACKET Received BUFFER");
                 Log.d(TAG,byteToHexString(buffer));
-                eventBus.post(new AudioMothPacketReceiveEvent(new DeviceInfo(buffer)));
+                eventBus.post(new AudioMothPacketReceiveEvent(new DeviceInfo(buffer,localTime)));
                 break;
             case USB_MSG_TYPE_SET_TIME:
                 Log.d(TAG,"SET_TIME Received BUFFER");
@@ -184,6 +185,14 @@ public class USBHidTool extends AbstractUSBHIDService {
                 eventBus.post(new USBDataReceiveEvent(buffer, buffer.length));
         }
 
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+       if(intent.getExtras()!=null){
+            localTime = (Boolean) intent.getExtras().get("localTime");
+       }
+        return super.onStartCommand(intent, flags, startId);
     }
 
     private void setupNotifications() { //called in onCreate()

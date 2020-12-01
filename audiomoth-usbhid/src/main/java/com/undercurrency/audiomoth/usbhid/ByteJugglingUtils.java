@@ -23,6 +23,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Date;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 /**
  * The ByteJugglingUtils provides functions to read and write integers to byte arrays,
@@ -142,10 +144,9 @@ public  class ByteJugglingUtils {
         }
         ByteBuffer bb = ByteBuffer.wrap(longArray);
         bb.order(ByteOrder.LITTLE_ENDIAN);
-        Date date = new Date();
         long timestamp = bb.getLong();
         if(timestamp==0) return  null;
-        date.setTime(timestamp*1000L);
+        Date date =new Date(timestamp*1000L);
         return date;
     }
 

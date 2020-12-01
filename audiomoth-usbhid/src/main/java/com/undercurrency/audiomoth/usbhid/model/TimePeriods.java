@@ -18,6 +18,7 @@
 package com.undercurrency.audiomoth.usbhid.model;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -96,10 +97,16 @@ public class TimePeriods implements Comparable<TimePeriods>, Serializable {
         sb.append(" - ");
         sb.append(fromMinToHrs(getEndMins()));
         if(localTime){
-            TimeZone tzdata = TimeZone.getDefault();
-            int tzInt = tzdata.getOffset(Calendar.ZONE_OFFSET);
-            int offset = tzInt / 3600000;
+            Calendar now = Calendar.getInstance();
+            TimeZone timeZone = now.getTimeZone();
+            int offset = timeZone.getRawOffset()/36000;
+            if(offset!=0){
            sb.append(String.format(" (UTC%d)",offset));
+            } else {
+                sb.append("(UTC)");
+            }
+        } else{
+            sb.append("(UTC)");
         }
         return sb.toString();
     }

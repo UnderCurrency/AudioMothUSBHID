@@ -160,7 +160,7 @@ public class RecordingSettings implements Serializable {
         if(isLocalTime()){
             Long lEndRecordingDate = readMillisFromByteArray(serialization,i);
             if(lEndRecordingDate!=null) {
-                endRecordingDate = new DateTime(lEndRecordingDate, DateTimeZone.UTC).toLocalDate().toDate();
+                endRecordingDate = new DateTime(lEndRecordingDate-1, DateTimeZone.UTC).toLocalDate().toDate();
             }
         } else {
             endRecordingDate = readDateFromByteArray(serialization, i);

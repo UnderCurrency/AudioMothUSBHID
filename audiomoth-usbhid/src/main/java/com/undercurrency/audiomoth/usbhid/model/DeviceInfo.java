@@ -23,8 +23,12 @@ import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
+
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readDateFromByteArray;
 
 /**
@@ -39,19 +43,30 @@ public class DeviceInfo implements Serializable {
     private String firmwareVersion;
     private String  battery;
     private String date;
-
+    private transient boolean localTime=false;
 
     /**
      * Create DeviceInfo from byte array
      * @param fromArray
      */
     public DeviceInfo(byte[] fromArray){
-        date = readDate(fromArray,1);
-        deviceId = readDeviceId(fromArray,1+4);
-        battery = readBatteryStatus(fromArray, 1+4+8);
-        firmwareVersion= readFirmware(fromArray,1 + 4 + 8 + 1);
+        this.date = readDate(fromArray,1);
+        this.deviceId = readDeviceId(fromArray,1+4);
+        this.battery = readBatteryStatus(fromArray, 1+4+8);
+        this.firmwareVersion= readFirmware(fromArray,1 + 4 + 8 + 1);
     }
 
+    /**
+     * Create DeviceInfo from byte array
+     * @param fromArray
+     */
+    public DeviceInfo(byte[] fromArray, boolean localTime){
+        this.date = readDate(fromArray,1);
+        this.deviceId = readDeviceId(fromArray,1+4);
+        this.battery = readBatteryStatus(fromArray, 1+4+8);
+        this.firmwareVersion= readFirmware(fromArray,1 + 4 + 8 + 1);
+        this.localTime = localTime;
+    }
 
 
     public DeviceInfo(String deviceId, String firmwareVersion, String battery, Date date) {
@@ -59,6 +74,22 @@ public class DeviceInfo implements Serializable {
         this.firmwareVersion = firmwareVersion;
         this.battery = battery;
         SimpleDateFormat sdf= new SimpleDateFormat("dd/MM/yyyy hh:mm:ss Z");
+        this.date = sdf.format(date);
+    }
+
+    public DeviceInfo(String deviceId, String firmwareVersion, String battery, Date date, boolean localTime) {
+        this.deviceId = deviceId;
+        this.firmwareVersion = firmwareVersion;
+        this.battery = battery;
+        SimpleDateFormat sdf= new SimpleDateFormat("dd/MM/yyyy hh:mm:ss Z");
+        TimeZone timeZone = null;
+        if(localTime){
+            Calendar now = Calendar.getInstance();
+            timeZone = now.getTimeZone();
+        } else {
+            timeZone = TimeZone.getTimeZone("UTC");
+        }
+        sdf.setTimeZone(timeZone);
         this.date = sdf.format(date);
     }
 
@@ -118,7 +149,16 @@ public class DeviceInfo implements Serializable {
     }
 
     public Date getRealDate(){
+        TimeZone timeZone = null;
+        if(localTime){
+            Calendar now = Calendar.getInstance();
+            timeZone = now.getTimeZone();
+        } else {
+            timeZone = TimeZone.getTimeZone("UTC");
+        }
+
         SimpleDateFormat sdf= new SimpleDateFormat("hh:mm:ss dd/MM/yyyy Z");
+        sdf.setTimeZone(timeZone);
         Date realDate = null;
         try {
             realDate = sdf.parse(getDate());
@@ -128,8 +168,17 @@ public class DeviceInfo implements Serializable {
         return realDate;
     }
 
+
     private String readDate(byte[]  buffer, int offset){
+        TimeZone timeZone = null;
+        if(localTime){
+            Calendar now = Calendar.getInstance();
+            timeZone = now.getTimeZone();
+        } else {
+            timeZone = TimeZone.getTimeZone("UTC");
+        }
        SimpleDateFormat sdf= new SimpleDateFormat("hh:mm:ss dd/MM/yyyy Z");
+        sdf.setTimeZone(timeZone);
         Date deviceDate = readDateFromByteArray(buffer,offset);
         if(deviceDate == null) return null;
         return sdf.format(deviceDate);

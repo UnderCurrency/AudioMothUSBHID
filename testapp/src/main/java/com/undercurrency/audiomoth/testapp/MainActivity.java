@@ -50,11 +50,13 @@ import com.undercurrency.audiomoth.usbhid.events.USBDataReceiveEvent;
 import com.undercurrency.audiomoth.usbhid.model.DeviceInfo;
 import com.undercurrency.audiomoth.usbhid.model.LifeSpan;
 import com.undercurrency.audiomoth.usbhid.model.RecordingSettings;
+import com.undercurrency.audiomoth.usbhid.model.TimePeriods;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import de.greenrobot.event.EventBus;
@@ -132,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     private void startService() {
         usbhidService = new Intent(this, USBHidTool.class);
+        usbhidService.putExtra("localTime",true);
         startService(usbhidService);
     }
 
@@ -184,6 +187,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 rs = gson.fromJson(ultrasonic, RecordingSettings.class);
                 rsIn = gson.fromJson(ultrasonic,RecordingSettings.class);
                 rs.setDeviceInfo(deviceInfo);
+                fixGsonDesrialization(rs);
                 //byte[] packet = rs.serializeToBytes();
                 eventBus.post(new AudioMothConfigEvent(rs));
                 //eventBus.post(new USBDataSendEvent(packet));
@@ -246,10 +250,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.d(TAG, "AudioMothConfigReceiveEvent");
         if (event.getRecordingSettings() != null) {
             rsOut = event.getRecordingSettings();
+            fixGsonDesrialization(rsOut);
             Gson gson = new Gson();
             String json = gson.toJson(event.getRecordingSettings());
             Log.d(TAG, json);
             tvJson.append(json);
+            System.out.println(rsOut.getTimePeriods().get(0).toString());
             if(rsIn.equals(rsOut)){
                 tvJson.append("************************\n");
                 tvJson.append("         Config OK\n");
@@ -297,6 +303,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         builder.show();
     }
 
-
+    private void fixGsonDesrialization(RecordingSettings rsLoaded) {
+       rsLoaded.setFirstRecordingEnable(rsLoaded.getFirstRecordingDate()!=null);
+       rsLoaded.setLastRecordingEnable(rsLoaded.getLastRecordingDate()!=null);
+        if(rsLoaded.isLocalTime()) {
+            ArrayList<TimePeriods> tp = rsLoaded.getTimePeriods();
+            for(TimePeriods t : tp){
+                t.setLocalTime(true);
+            }
+        }
+    }
 
 }
