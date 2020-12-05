@@ -361,10 +361,10 @@ public class RecordingSettings implements Serializable {
         }
         if (!timePeriods.containsAll(that.timePeriods)) return false;
         if(firstRecordingDate!=null){
-            return dateTimeComparator.compare(firstRecordingDate,that.getFirstRecordingDate())!=0;
+            if( dateTimeComparator.compare(firstRecordingDate,that.getFirstRecordingDate())!=0) return false;
         }
         if(lastRecordingDate!=null){
-           return dateTimeComparator.compare(lastRecordingDate,that.getLastRecordingDate())!=0;
+           if( dateTimeComparator.compare(lastRecordingDate,that.getLastRecordingDate())!=0) return  false;
         }
         return true;
     }
