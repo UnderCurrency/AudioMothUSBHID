@@ -322,6 +322,12 @@ public class RecordingSettings implements Serializable {
         return serialization;
     }
 
+    /**
+     * Compares two RecordingSettings
+     * For convenience ignores the status of amplituedeThresholdingEnabled if the value of amplitudeThresHodling is 0
+     * @param o
+     * @return
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -342,10 +348,15 @@ public class RecordingSettings implements Serializable {
             if (higherFilter != that.higherFilter) return false;
             if (filterType != that.filterType) return false;
         }
-        if (amplitudeThresholdingEnabled != that.amplitudeThresholdingEnabled) return false;
-        if(amplitudeThresholdingEnabled) {
+        if(amplitudeThreshold!=0) {
+            if (amplitudeThresholdingEnabled != that.amplitudeThresholdingEnabled) return false;
+            if(amplitudeThresholdingEnabled) {
+                if (amplitudeThreshold != that.amplitudeThreshold) return false;
+            }
+        } else {
             if (amplitudeThreshold != that.amplitudeThreshold) return false;
         }
+
         if (!timePeriods.containsAll(that.timePeriods)) return false;
         if(firstRecordingDate!=null && !firstRecordingDate.equals(that.firstRecordingDate)) return false;
         if(lastRecordingDate!=null && !lastRecordingDate.equals(that.lastRecordingDate)) return false;
