@@ -90,24 +90,34 @@ public class TimePeriods implements Comparable<TimePeriods>, Serializable {
         return this.getStartMins() - o.getStartMins();
     }
 
+    /**
+     * Format a TimePeriod timezone aware
+     *
+     * @return
+     */
     @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
-        sb.append(fromMinToHrs(getStartMins()));
-        sb.append(" - ");
-        sb.append(fromMinToHrs(getEndMins()));
-        if(localTime){
+        int startMins = getStartMins();
+        int endMins = getEndMins();
+        int offset = 0;
+        int minOffset = 0;
+        String utc = "(UTC)";
+        if(localTime) {
             Calendar now = Calendar.getInstance();
             TimeZone timeZone = now.getTimeZone();
-            int offset = timeZone.getRawOffset()/36000;
-            if(offset!=0){
-           sb.append(String.format(" (UTC%d)",offset));
-            } else {
-                sb.append("(UTC)");
-            }
-        } else{
-            sb.append("(UTC)");
+            offset = timeZone.getRawOffset() / 36000;
+            minOffset = timeZone.getRawOffset()/ 60000;
+            utc =  String.format(" (UTC%d)",offset);
+            startMins +=  minOffset;
+            endMins += minOffset;
+            startMins = startMins <0 ? startMins+1440:startMins;
+            endMins = endMins<0 ? endMins+1440:endMins;
         }
+        sb.append(fromMinToHrs(startMins));
+        sb.append(" - ");
+        sb.append(fromMinToHrs(endMins));
+        sb.append(utc);
         return sb.toString();
     }
 

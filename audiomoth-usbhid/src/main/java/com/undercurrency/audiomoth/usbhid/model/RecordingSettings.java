@@ -128,10 +128,10 @@ public class RecordingSettings implements Serializable {
         ArrayList<TimePeriods> tp = new ArrayList<TimePeriods>(timePeriodsLength + 1);
 
         for (int j = 0; j < timePeriodsLength; j++) {
-            int tzOffset = isLocalTime()?calculateTimezoneOffsetMins():0;
-            int intStartMins = readShortFromLittleEndian(serialization, i)+tzOffset;
+          //  int tzOffset = isLocalTime()?calculateTimezoneOffsetMins():0;
+            int intStartMins = readShortFromLittleEndian(serialization, i);
             i += 2;
-            int intEndMins = readShortFromLittleEndian(serialization, i)+tzOffset;
+            int intEndMins = readShortFromLittleEndian(serialization, i);
             i += 2;
             tp.add(j, new TimePeriods(intStartMins, intEndMins, isLocalTime()));
         }
@@ -244,10 +244,10 @@ public class RecordingSettings implements Serializable {
         Collections.sort(timePeriods);
         serialization[index++] = (byte) timePeriods.size();
         for (int i = 0; i < timePeriods.size(); i++) {
-            short minOffset = (short) (isLocalTime()?calculateTimezoneOffsetMins():0);
-            writeShortToLittleEndian(serialization, index, (short) ((short) timePeriods.get(i).getStartMins()-minOffset));
+            //short minOffset = (short) (isLocalTime()?calculateTimezoneOffsetMins():0);
+            writeShortToLittleEndian(serialization, index, (short) ((short) timePeriods.get(i).getStartMins()));
             index += 2;
-            writeShortToLittleEndian(serialization, index, (short) ((short) timePeriods.get(i).getEndMins()-minOffset));
+            writeShortToLittleEndian(serialization, index, (short) ((short) timePeriods.get(i).getEndMins()));
             index += 2;
         }
         for (int i = 0; i < MAX_PERIODS - timePeriods.size(); i++) {

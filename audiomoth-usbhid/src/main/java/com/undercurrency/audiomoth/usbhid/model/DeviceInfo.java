@@ -19,6 +19,9 @@ package com.undercurrency.audiomoth.usbhid.model;
 
 import android.annotation.SuppressLint;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -30,6 +33,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readDateFromByteArray;
+import static com.undercurrency.audiomoth.usbhid.ByteJugglingUtils.readMillisFromByteArray;
 
 /**
  * DeviceInfo a pojo to hold the basic device identification for an AM device
@@ -157,7 +161,7 @@ public class DeviceInfo implements Serializable {
             timeZone = TimeZone.getTimeZone("UTC");
         }
 
-        SimpleDateFormat sdf= new SimpleDateFormat("hh:mm:ss dd/MM/yyyy Z");
+        SimpleDateFormat sdf= new SimpleDateFormat("HH:mm:ss dd/MM/yyyy Z");
         sdf.setTimeZone(timeZone);
         Date realDate = null;
         try {
@@ -171,16 +175,13 @@ public class DeviceInfo implements Serializable {
 
     private String readDate(byte[]  buffer, int offset){
         TimeZone timeZone = null;
-        if(localTime){
             Calendar now = Calendar.getInstance();
             timeZone = now.getTimeZone();
-        } else {
-            timeZone = TimeZone.getTimeZone("UTC");
-        }
-       SimpleDateFormat sdf= new SimpleDateFormat("hh:mm:ss dd/MM/yyyy Z");
+       SimpleDateFormat sdf= new SimpleDateFormat("HH:mm:ss dd/MM/yyyy Z");
         sdf.setTimeZone(timeZone);
-        Date deviceDate = readDateFromByteArray(buffer,offset);
+        Long deviceDate = readMillisFromByteArray(buffer,offset);
         if(deviceDate == null) return null;
+        new DateTime(deviceDate, DateTimeZone.forTimeZone(timeZone)).toLocalDate().toDate();
         return sdf.format(deviceDate);
     }
 
