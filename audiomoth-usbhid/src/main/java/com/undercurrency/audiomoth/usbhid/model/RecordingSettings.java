@@ -179,7 +179,7 @@ public class RecordingSettings implements Serializable {
             setPassFiltersEnabled(true);
             setFilterType(FilterType.BAND);
             setLowerFilter(0);
-            setHigherFilter(this.getSampleRate()/2000);
+            setHigherFilter(this.getSampleRate()/2);
         } else if (lowFil == UINT16_MAX) {
             Log.d(TAG,"lowFil==UINT16_MAX");
             setPassFiltersEnabled(true);
@@ -190,7 +190,7 @@ public class RecordingSettings implements Serializable {
             Log.d(TAG, "hiFil==UINT16_MAX");
             setPassFiltersEnabled(true);
             setFilterType(FilterType.HIGH);
-            setHigherFilter(this.getSampleRate()/2000);
+            setHigherFilter(this.getSampleRate()/2);
             setLowerFilter(lowFil*100);
         } else {
             setPassFiltersEnabled(true);
