@@ -21,6 +21,7 @@ package com.undercurrency.audiomoth.usbhid.model;
 import android.util.Log;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeComparator;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
@@ -330,6 +331,8 @@ public class RecordingSettings implements Serializable {
      */
     @Override
     public boolean equals(Object o) {
+        DateTimeComparator dateTimeComparator = DateTimeComparator.getDateOnlyInstance();
+
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RecordingSettings that = (RecordingSettings) o;
@@ -356,10 +359,13 @@ public class RecordingSettings implements Serializable {
         } else {
             if (amplitudeThreshold != that.amplitudeThreshold) return false;
         }
-
         if (!timePeriods.containsAll(that.timePeriods)) return false;
-        if(firstRecordingDate!=null && !firstRecordingDate.equals(that.firstRecordingDate)) return false;
-        if(lastRecordingDate!=null && !lastRecordingDate.equals(that.lastRecordingDate)) return false;
+        if(firstRecordingDate!=null){
+            return dateTimeComparator.compare(firstRecordingDate,that.getFirstRecordingDate())!=0;
+        }
+        if(lastRecordingDate!=null){
+           return dateTimeComparator.compare(lastRecordingDate,that.getLastRecordingDate())!=0;
+        }
         return true;
     }
 
