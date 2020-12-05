@@ -280,6 +280,7 @@ public class RecordingSettings implements Serializable {
         if(isFirstRecordingEnable() && getFirstRecordingDate()!=null) {
             long earliestRecordingTime = 0;
             DateTime dtUTC = new LocalDateTime(getFirstRecordingDate().getTime()).toDateTime(DateTimeZone.UTC);
+            dtUTC = dtUTC.withTime(0,0,0,0);
             earliestRecordingTime =dtUTC.getMillis() / 1000L;
             writeLongToLittleEndian(serialization, index, earliestRecordingTime);
         }
