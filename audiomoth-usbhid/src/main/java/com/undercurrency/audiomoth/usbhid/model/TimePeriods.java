@@ -85,9 +85,14 @@ public class TimePeriods implements Comparable<TimePeriods>, Serializable {
         return result;
     }
 
+    /**
+     * Compare two TimePeriods by its string representation
+     * @param otherTimePeriod
+     * @return
+     */
     @Override
-    public int compareTo(TimePeriods o) {
-        return this.getStartMins() - o.getStartMins();
+    public int compareTo(TimePeriods otherTimePeriod) {
+        return this.toString().compareTo(otherTimePeriod.toString());
     }
 
     /**
