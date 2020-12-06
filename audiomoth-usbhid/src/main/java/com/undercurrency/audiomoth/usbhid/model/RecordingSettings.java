@@ -23,6 +23,7 @@ import android.util.Log;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.tz.UTCProvider;
@@ -275,21 +276,28 @@ public class RecordingSettings implements Serializable {
         long timezoneOffset = tzLocal.getOffset(instant)/60000;
 
         int dayDiff = dtLocal.getDayOfMonth() - dtUTC.getDayOfMonth();*/
-
-
         if(isFirstRecordingEnable() && getFirstRecordingDate()!=null) {
-            long earliestRecordingTime = 0;
-            DateTime dtUTC = new LocalDateTime(getFirstRecordingDate().getTime()).toDateTime(DateTimeZone.UTC);
-            dtUTC = dtUTC.withTime(0,0,0,0);
-            earliestRecordingTime =dtUTC.getMillis() / 1000L;
+            long earliestRecordingTime =0;
+            LocalDateTime dtLocal = new LocalDateTime(getFirstRecordingDate().getTime());
+
+            dtLocal=dtLocal.withTime(0,0,0,0);
+
+            DateTime dt = dtLocal.toDateTime();
+            DateTime dtUTC = dt.toDateTime(DateTimeZone.UTC);
+
+            earliestRecordingTime = (dtUTC.getMillis())/1000L;
             writeLongToLittleEndian(serialization, index, earliestRecordingTime);
         }
         index += 4;
         if(isLastRecordingEnable() && getLastRecordingDate()!=null) {
             long lastRecordingTime = 0;
-            DateTime dtUTC = new LocalDateTime(getLastRecordingDate().getTime()).toDateTime(DateTimeZone.UTC);
+            LocalDateTime dtLocal = new LocalDateTime(getLastRecordingDate().getTime());
+            dtLocal = dtLocal.withTime(23,59,59,999);
+
+            DateTime dt = dtLocal.toDateTime();
+            DateTime dtUTC = dt.toDateTime(DateTimeZone.UTC);
+
             /* Make latestRecordingTime timestamp inclusive by setting it to the end of the chosen day */
-            dtUTC = dtUTC.withTime(23,59,59,999);
             lastRecordingTime = (dtUTC.getMillis()+1) / 1000L;
             writeLongToLittleEndian(serialization, index, lastRecordingTime);
         }
