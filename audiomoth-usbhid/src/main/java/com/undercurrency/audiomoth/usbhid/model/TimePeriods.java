@@ -17,6 +17,8 @@
 
 package com.undercurrency.audiomoth.usbhid.model;
 
+import android.app.IntentService;
+
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -92,7 +94,20 @@ public class TimePeriods implements Comparable<TimePeriods>, Serializable {
      */
     @Override
     public int compareTo(TimePeriods otherTimePeriod) {
-        return this.toString().compareTo(otherTimePeriod.toString());
+        if(otherTimePeriod!=null) {
+            String[] tp1 = this.toString().split(":|\\s");
+            String[] tp2 = otherTimePeriod.toString().split(":|\\s");
+            Integer h1 = Integer.valueOf(tp1[0]);
+            Integer h2 = Integer.valueOf(tp2[0]);
+            if (h1.equals(h2)) {
+                Integer m1 = Integer.valueOf(tp1[1]);
+                Integer m2 = Integer.valueOf(tp2[1]);
+                return m1.compareTo(m2);
+            } else {
+                return h1.compareTo(h2);
+            }
+        }
+        return -1;
     }
 
     /**
